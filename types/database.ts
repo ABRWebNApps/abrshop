@@ -23,12 +23,12 @@ export interface Category {
 export interface Banner {
   id: string
   title: string
-  subtitle?: string
+  subtitle?: string | null
   image_url: string
-  button_text?: string
-  button_link?: string
-  start_date?: string
-  end_date?: string
+  button_text?: string | null
+  button_link?: string | null
+  start_date?: string | null
+  end_date?: string | null
   is_active: boolean
   created_at: string
   updated_at: string

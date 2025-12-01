@@ -125,7 +125,7 @@ export default function BannerManagement({ initialBanners }: BannerManagementPro
         if (error) throw error
 
         setBanners(
-          banners.map((b) => (b.id === editingBanner.id ? { ...b, ...bannerData } : b))
+          banners.map((b) => (b.id === editingBanner.id ? { ...b, ...bannerData } as Banner : b))
         )
       } else {
         const { data, error } = await supabase.from('banners').insert(bannerData).select()

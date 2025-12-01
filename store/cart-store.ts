@@ -59,7 +59,13 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'abr-cart-storage',
-      storage: createJSONStorage(() => typeof window !== 'undefined' ? localStorage : undefined),
+      storage: typeof window !== 'undefined' 
+        ? createJSONStorage(() => localStorage)
+        : {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+          },
     }
   )
 )

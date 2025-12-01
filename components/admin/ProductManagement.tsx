@@ -69,6 +69,7 @@ export default function ProductManagement({
       stock: '',
       category_id: '',
       images: [],
+      is_new_arrival: false,
     })
   }
 

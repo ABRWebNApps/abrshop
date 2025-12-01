@@ -88,7 +88,7 @@ export default function CategoryManagement({ initialCategories }: CategoryManage
         if (error) throw error
 
         setCategories(
-          categories.map((c) => (c.id === editingCategory.id ? { ...c, ...categoryData } : c))
+          categories.map((c) => (c.id === editingCategory.id ? { ...c, ...categoryData } as Category : c))
         )
       } else {
         const { data, error } = await supabase.from('categories').insert(categoryData).select()

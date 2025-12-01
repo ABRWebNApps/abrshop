@@ -66,8 +66,8 @@ export default async function Home() {
               />
             ) : (
               <Image
-                src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80"
-                alt="Modern Tech Store"
+                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1920&q=80"
+                alt="Black professionals with technology and gadgets"
                 fill
                 className="object-cover opacity-60"
                 priority
@@ -111,8 +111,8 @@ export default async function Home() {
         <section className="relative h-[500px] md:h-[600px] overflow-hidden bg-black">
           <div className="absolute inset-0">
             <Image
-              src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80"
-              alt="Modern Tech Store"
+              src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1920&q=80"
+              alt="Black professionals with technology and gadgets"
               fill
               className="object-cover opacity-60"
               priority

@@ -1,61 +1,74 @@
-import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
-import Image from 'next/image'
-import AddToCartButton from '@/components/AddToCartButton'
-import ProductCard from '@/components/ProductCard'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import { formatCurrency } from '@/lib/utils/currency'
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import Image from "next/image";
+import AddToCartButton from "@/components/AddToCartButton";
+import ProductCard from "@/components/ProductCard";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { formatCurrency } from "@/lib/utils/currency";
 
 async function getProduct(id: string) {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const { data, error } = await supabase
-    .from('products')
-    .select('*, category:categories(*)')
-    .eq('id', id)
-    .single()
+    .from("products")
+    .select(
+      "*, category:categories(*), brand:brands(*), tags:product_tags(tag:tags(*))"
+    )
+    .eq("id", id)
+    .single();
 
   if (error || !data) {
-    console.error('Error fetching product:', error)
-    return null
+    console.error("Error fetching product:", error);
+    return null;
   }
-  return data
+  return data;
 }
 
-async function getSimilarProducts(categoryId: string | null, currentProductId: string) {
-  const supabase = await createClient()
-  
+async function getSimilarProducts(
+  categoryId: string | null,
+  currentProductId: string
+) {
+  const supabase = await createClient();
+
   let query = supabase
-    .from('products')
-    .select('*, category:categories(*)')
-    .neq('id', currentProductId)
-    .gt('stock', 0)
-    .limit(4)
+    .from("products")
+    .select(
+      "*, category:categories(*), brand:brands(*), tags:product_tags(tag:tags(*))"
+    )
+    .neq("id", currentProductId)
+    .gt("stock", 0)
+    .limit(4);
 
   if (categoryId) {
-    query = query.eq('category_id', categoryId)
+    query = query.eq("category_id", categoryId);
   }
 
-  const { data } = await query
-  return data || []
+  const { data } = await query;
+  return data || [];
 }
 
-export default async function ProductPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> | { id: string } 
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }> | { id: string };
 }) {
   // Handle both sync and async params (Next.js 15+ compatibility)
-  const resolvedParams = params instanceof Promise ? await params : params
-  const product = await getProduct(resolvedParams.id)
+  const resolvedParams = params instanceof Promise ? await params : params;
+  const product = await getProduct(resolvedParams.id);
 
   if (!product) {
-    notFound()
+    notFound();
   }
 
-  const similarProducts = await getSimilarProducts(product.category_id, product.id)
-  const mainImage = product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/800x800?text=No+Image'
-  const otherImages = product.images?.slice(1) || []
+  const similarProducts = await getSimilarProducts(
+    product.category_id,
+    product.id
+  );
+  const mainImage =
+    product.images && product.images.length > 0
+      ? product.images[0]
+      : "https://via.placeholder.com/800x800?text=No+Image";
+  const otherImages = product.images?.slice(1) || [];
 
   return (
     <div className="min-h-screen bg-black">
@@ -83,7 +96,10 @@ export default async function ProductPage({
             {otherImages.length > 0 && (
               <div className="grid grid-cols-4 gap-4">
                 {otherImages.map((image: string, index: number) => (
-                  <div key={index} className="relative aspect-square overflow-hidden rounded-xl bg-gray-900 border border-white/10">
+                  <div
+                    key={index}
+                    className="relative aspect-square overflow-hidden rounded-xl bg-gray-900 border border-white/10"
+                  >
                     <Image
                       src={image}
                       alt={`${product.name} ${index + 2}`}
@@ -108,8 +124,12 @@ export default async function ProductPage({
                 </Link>
               )}
             </div>
-            <h1 className="text-4xl font-bold text-white mb-4">{product.name}</h1>
-            <p className="text-3xl font-bold text-white mb-6">{formatCurrency(product.price)}</p>
+            <h1 className="text-4xl font-bold text-white mb-4">
+              {product.name}
+            </h1>
+            <p className="text-3xl font-bold text-white mb-6">
+              {formatCurrency(product.price)}
+            </p>
 
             <div className="mb-8">
               <p className="text-gray-300 leading-relaxed whitespace-pre-line">
@@ -117,15 +137,66 @@ export default async function ProductPage({
               </p>
             </div>
 
+            {/* Tags */}
+            {(product as any).tags &&
+              Array.isArray((product as any).tags) &&
+              (product as any).tags.length > 0 && (
+                <div className="mb-8">
+                  <span className="text-sm font-medium text-gray-400 mb-3 block">
+                    Tags:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {(product as any).tags.map((pt: any, idx: number) => {
+                      // Handle nested structure: tags:product_tags(tag:tags(*))
+                      let tag = null;
+                      if (pt && typeof pt === "object") {
+                        tag = pt.tag || pt;
+                      }
+
+                      const tagName = tag?.name;
+                      const tagId = tag?.id || `tag-${idx}`;
+
+                      if (!tagName) return null;
+
+                      return (
+                        <Link
+                          key={tagId}
+                          href={`/products?search=${encodeURIComponent(tagName)}`}
+                          className="inline-flex items-center px-3 py-1.5 bg-blue-500/20 text-blue-400 text-sm rounded-full border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-500/50 transition-all cursor-pointer"
+                        >
+                          {tagName}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            {/* Brand */}
+            {(product as any).brand && (product as any).brand.name && (
+              <div className="mb-8">
+                <span className="text-sm font-medium text-gray-400 mb-2 block">
+                  Brand:
+                </span>
+                <span className="inline-flex items-center px-3 py-1.5 bg-gray-800 text-white text-sm rounded-lg border border-white/10">
+                  {(product as any).brand.name}
+                </span>
+              </div>
+            )}
+
             <div className="mb-8">
               <div className="flex items-center space-x-4 mb-4">
-                <span className="text-sm font-medium text-gray-400">Stock:</span>
+                <span className="text-sm font-medium text-gray-400">
+                  Stock:
+                </span>
                 {product.stock > 0 ? (
                   <span className="text-sm text-green-400 font-semibold">
                     {product.stock} available
                   </span>
                 ) : (
-                  <span className="text-sm text-red-400 font-semibold">Out of Stock</span>
+                  <span className="text-sm text-red-400 font-semibold">
+                    Out of Stock
+                  </span>
                 )}
               </div>
             </div>
@@ -143,7 +214,9 @@ export default async function ProductPage({
         {/* Similar Products */}
         {similarProducts.length > 0 && (
           <div className="mt-16 pt-16 border-t border-white/10">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">Similar Products</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">
+              Similar Products
+            </h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {similarProducts.map((similarProduct) => (
                 <ProductCard key={similarProduct.id} product={similarProduct} />
@@ -153,6 +226,5 @@ export default async function ProductPage({
         )}
       </div>
     </div>
-  )
+  );
 }
-

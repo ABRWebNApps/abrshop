@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import type { Product } from "@/types/database";
@@ -17,6 +18,7 @@ export default function ProductCard({
   product,
   showNewBadge = false,
 }: ProductCardProps) {
+  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -125,6 +127,62 @@ export default function ProductCard({
           <h3 className="font-semibold text-white mb-1 md:mb-2 line-clamp-2 text-xs md:text-sm">
             {product.name}
           </h3>
+          {/* Brand */}
+          {(product as any).brand && (product as any).brand.name && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push(`/products?search=${encodeURIComponent((product as any).brand.name)}`);
+              }}
+              className="inline-block mb-1.5"
+            >
+              <span className="inline-block px-2 py-0.5 bg-purple-500/20 text-purple-400 text-[9px] md:text-[10px] rounded-full border border-purple-500/30 font-medium hover:bg-purple-500/30 transition-colors">
+                {(product as any).brand.name}
+              </span>
+            </button>
+          )}
+
+          {/* Tags */}
+          {(product as any).tags &&
+            Array.isArray((product as any).tags) &&
+            (product as any).tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {(product as any).tags
+                  .slice(0, 3)
+                  .map((pt: any, idx: number) => {
+                    // Handle nested structure: tags:product_tags(tag:tags(*)) returns [{tag: {id, name}}, ...]
+                    let tag = null;
+                    if (pt && typeof pt === "object") {
+                      tag = pt.tag || pt;
+                    }
+
+                    const tagName = tag?.name;
+                    const tagId = tag?.id || `tag-${idx}`;
+
+                    if (!tagName) return null;
+
+                    return (
+                      <button
+                        key={tagId}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          router.push(`/products?search=${encodeURIComponent(tagName)}`);
+                        }}
+                        className="inline-block px-1.5 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] md:text-[10px] rounded-full border border-blue-500/30 font-medium hover:bg-blue-500/30 transition-colors cursor-pointer"
+                      >
+                        {tagName}
+                      </button>
+                    );
+                  })}
+                {(product as any).tags.length > 3 && (
+                  <span className="inline-block px-1.5 py-0.5 bg-gray-800 text-gray-400 text-[9px] md:text-[10px] rounded-full border border-white/10">
+                    +{(product as any).tags.length - 3}
+                  </span>
+                )}
+              </div>
+            )}
           <p className="text-xs md:text-sm text-gray-400 font-medium">
             {formatCurrency(product.price)}
           </p>

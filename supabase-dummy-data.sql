@@ -43,6 +43,6 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Dummy Banner
 INSERT INTO banners (id, title, subtitle, image_url, button_text, button_link, is_active) VALUES
-  ('770e8400-e29b-41d4-a716-446655440001', 'Welcome to ABR Technologies', 'Discover premium technology solutions for modern businesses', 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=1920', 'Shop Now', '/products', true)
+  ('770e8400-e29b-41d4-a716-446655440001', 'Welcome to ABR Technologies', 'Find quality tech that fits your everyday needs', 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=1920', 'Shop Now', '/products', true)
 ON CONFLICT (id) DO NOTHING;
 

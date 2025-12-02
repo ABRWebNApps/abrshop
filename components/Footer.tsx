@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { Facebook, Instagram, Youtube, Twitter, Music } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -20,7 +21,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
-              Premium technology for the modern professional. We curate the finest hardware from around the globe, ensuring quality, performance, and aesthetic excellence.
+              Quality technology solutions for individuals and business owners. We offer reliable hardware and gadgets to meet your everyday needs.
             </p>
           </div>
           <div>
@@ -57,11 +58,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/admin" className="text-gray-400 hover:text-white transition-colors">
-                  Admin Portal
-                </Link>
-              </li>
-              <li>
                 <Link href="/shipping" className="text-gray-400 hover:text-white transition-colors">
                   Shipping
                 </Link>
@@ -74,8 +70,59 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} ABR TECH. All rights reserved.</p>
+        
+        {/* Social Media Icons */}
+        <div className="mt-12 pt-8 border-t border-white/10">
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <a
+              href="https://facebook.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Facebook"
+            >
+              <Facebook className="w-5 h-5" />
+            </a>
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Instagram"
+            >
+              <Instagram className="w-5 h-5" />
+            </a>
+            <a
+              href="https://tiktok.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="TikTok"
+            >
+              <Music className="w-5 h-5" />
+            </a>
+            <a
+              href="https://x.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="X (Twitter)"
+            >
+              <Twitter className="w-5 h-5" />
+            </a>
+            <a
+              href="https://youtube.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="YouTube"
+            >
+              <Youtube className="w-5 h-5" />
+            </a>
+          </div>
+          <div className="text-center text-sm text-gray-400">
+            <p>&copy; {new Date().getFullYear()} ABR TECHNOLOGIES. All rights reserved.</p>
+          </div>
         </div>
       </div>
     </footer>

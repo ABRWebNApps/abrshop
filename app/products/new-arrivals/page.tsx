@@ -12,7 +12,7 @@ async function getNewArrivals() {
   
   const { data, error } = await supabase
     .from('products')
-    .select('*, category:categories(*)')
+    .select('*, category:categories(*), brand:brands(*), tags:product_tags(tag:tags(*))')
     .gt('stock', 0)
     .or(`is_new_arrival.eq.true,created_at.gte.${thirtyDaysAgo.toISOString()}`)
     .order('created_at', { ascending: false })
@@ -22,7 +22,7 @@ async function getNewArrivals() {
     // Fallback: just get recent products if is_new_arrival column doesn't exist
     const { data: fallbackData } = await supabase
       .from('products')
-      .select('*, category:categories(*)')
+      .select('*, category:categories(*), brand:brands(*), tags:product_tags(tag:tags(*))')
       .gt('stock', 0)
       .gte('created_at', thirtyDaysAgo.toISOString())
       .order('created_at', { ascending: false })

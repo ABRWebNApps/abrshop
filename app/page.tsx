@@ -38,7 +38,9 @@ async function getFeaturedProducts() {
 
   const { data, error } = await supabase
     .from("products")
-    .select("*, category:categories(*)")
+    .select(
+      "*, category:categories(*), brand:brands(*), tags:product_tags(tag:tags(*))"
+    )
     .gt("stock", 0)
     .order("created_at", { ascending: false })
     .limit(8);
@@ -77,9 +79,11 @@ export default async function Home() {
           </div>
           <div className="relative z-10 h-full flex items-center justify-center">
             <div className="text-center text-white px-4 max-w-3xl">
-              <p className="text-xs md:text-sm text-blue-400 mb-4 uppercase tracking-wider">
-                NEW ARRIVALS
-              </p>
+              <Link href="/products/new-arrivals" className="block">
+                <p className="text-xs md:text-sm text-blue-400 mb-4 uppercase tracking-wider hover:text-blue-300 transition-colors cursor-pointer">
+                  NEW ARRIVALS
+                </p>
+              </Link>
               <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold mb-4">
                 {banner.title}
               </h1>
@@ -121,9 +125,11 @@ export default async function Home() {
           </div>
           <div className="relative z-10 h-full flex items-center justify-center">
             <div className="text-center text-white px-4 max-w-3xl">
-              <p className="text-xs md:text-sm text-blue-400 mb-4 uppercase tracking-wider">
-                NEW ARRIVALS
-              </p>
+              <Link href="/products/new-arrivals" className="block">
+                <p className="text-xs md:text-sm text-blue-400 mb-4 uppercase tracking-wider hover:text-blue-300 transition-colors cursor-pointer">
+                  NEW ARRIVALS
+                </p>
+              </Link>
               <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold mb-4">
                 Titanium. Tough.
               </h1>
@@ -226,16 +232,18 @@ export default async function Home() {
             )}
             <div className="space-y-6">
               <div className="bg-gray-900 rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all">
-                <h3 className="text-xl font-bold text-white mb-2">Trade In.</h3>
+                <h3 className="text-xl font-bold text-white mb-2">
+                  Special Offers.
+                </h3>
                 <p className="text-gray-400 mb-4">
-                  Upgrade to the latest tech and get credit for your old
-                  devices.
+                  Discover exclusive deals and limited-time offers on our latest
+                  products.
                 </p>
                 <Link
                   href="/products"
                   className="text-blue-500 hover:text-blue-400 font-medium"
                 >
-                  See values →
+                  View offers →
                 </Link>
               </div>
               {products[1] && (

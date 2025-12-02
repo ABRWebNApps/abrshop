@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ABR TECH - Premium Technology",
-  description: "Premium technology for the modern professional. We curate the finest hardware from around the globe.",
+  title: "ABR TECH - Quality Technology",
+  description: "Quality technology solutions for individuals and business owners. Reliable hardware and gadgets for your everyday needs.",
   icons: {
     icon: '/abrlogo.png',
     apple: '/abrlogo.png',

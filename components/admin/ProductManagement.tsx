@@ -1,36 +1,69 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Product, Category } from '@/types/database'
 import Image from 'next/image'
 
+interface Brand {
+  id: string
+  name: string
+  category_id: string
+}
+
 interface ProductManagementProps {
   initialProducts: Product[]
   categories: Category[]
+  initialBrands?: Brand[]
 }
 
 export default function ProductManagement({
   initialProducts,
   categories,
+  initialBrands = [],
 }: ProductManagementProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(false)
+  const [brands, setBrands] = useState<Brand[]>(initialBrands)
+  const [availableBrands, setAvailableBrands] = useState<Brand[]>([])
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     stock: '',
     category_id: '',
+    brand_id: '',
     images: [] as string[],
     is_new_arrival: false,
   })
   const [uploading, setUploading] = useState(false)
 
   const supabase = createClient()
+
+  // Load brands when category changes
+  useEffect(() => {
+    const loadBrands = async () => {
+      if (!formData.category_id) {
+        setAvailableBrands([])
+        return
+      }
+
+      const { data } = await supabase
+        .from('brands')
+        .select('*')
+        .eq('category_id', formData.category_id)
+        .order('name')
+
+      if (data) {
+        setAvailableBrands(data)
+      }
+    }
+
+    loadBrands()
+  }, [formData.category_id, supabase])
 
   const handleOpenModal = (product?: Product) => {
     if (product) {
@@ -40,7 +73,8 @@ export default function ProductManagement({
         description: product.description,
         price: product.price.toString(),
         stock: product.stock.toString(),
-        category_id: product.category_id,
+        category_id: product.category_id || '',
+        brand_id: (product as any).brand_id || '',
         images: product.images || [],
         is_new_arrival: (product as any).is_new_arrival || false,
       })
@@ -52,6 +86,7 @@ export default function ProductManagement({
         price: '',
         stock: '',
         category_id: categories[0]?.id || '',
+        brand_id: '',
         images: [],
         is_new_arrival: false,
       })
@@ -68,6 +103,7 @@ export default function ProductManagement({
       price: '',
       stock: '',
       category_id: '',
+      brand_id: '',
       images: [],
       is_new_arrival: false,
     })
@@ -118,6 +154,7 @@ export default function ProductManagement({
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
         category_id: formData.category_id,
+        brand_id: formData.brand_id || null,
         images: formData.images,
         is_new_arrival: formData.is_new_arrival,
       }
@@ -319,7 +356,7 @@ export default function ProductManagement({
                   <select
                     required
                     value={formData.category_id}
-                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value, brand_id: '' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select a category</option>
@@ -330,6 +367,29 @@ export default function ProductManagement({
                     ))}
                   </select>
                 </div>
+
+                {formData.category_id && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand (Optional)</label>
+                    <select
+                      value={formData.brand_id}
+                      onChange={(e) => setFormData({ ...formData, brand_id: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">No Brand</option>
+                      {availableBrands.map((brand) => (
+                        <option key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </option>
+                      ))}
+                    </select>
+                    {availableBrands.length === 0 && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        No brands available for this category. Add brands in the Brands section.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div>
                   <label className="flex items-center space-x-2">

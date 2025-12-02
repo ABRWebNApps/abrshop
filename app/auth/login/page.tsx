@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -17,6 +17,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const {
@@ -27,22 +28,44 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   })
 
+  // Check for message or error in URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const urlMessage = params.get('message')
+    const urlError = params.get('error')
+    if (urlMessage) setMessage(urlMessage)
+    if (urlError) setError(urlError)
+  }, [])
+
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true)
     setError(null)
+    setMessage(null)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     })
 
     if (error) {
-      setError(error.message)
+      // Check if error is due to unverified email
+      if (error.message.includes('Email not confirmed') || error.message.includes('email')) {
+        setError('Please verify your email address before signing in. Check your inbox for the verification link.')
+      } else {
+        setError(error.message)
+      }
       setLoading(false)
-    } else {
-      router.push('/')
-      router.refresh()
+    } else if (signInData.user) {
+      // Check if user is verified
+      if (!signInData.user.email_confirmed_at) {
+        setError('Please verify your email address before signing in. Check your inbox for the verification link.')
+        await supabase.auth.signOut()
+        setLoading(false)
+      } else {
+        router.push('/')
+        router.refresh()
+      }
     }
   }
 
@@ -61,6 +84,11 @@ export default function LoginPage() {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          {message && (
+            <div className="bg-blue-900/20 border border-blue-500/50 text-blue-400 px-4 py-3 rounded-lg">
+              {message}
+            </div>
+          )}
           {error && (
             <div className="bg-red-900/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg">
               {error}

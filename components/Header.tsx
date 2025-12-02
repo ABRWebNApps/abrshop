@@ -1,42 +1,44 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import Image from 'next/image'
-import { ShoppingBag, User, Menu, X, Shield } from 'lucide-react'
-import { useCartStore } from '@/store/cart-store'
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { usePathname } from 'next/navigation'
+import Link from "next/link";
+import Image from "next/image";
+import { ShoppingBag, User, Menu, X, Shield } from "lucide-react";
+import { useCartStore } from "@/store/cart-store";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const itemCount = useCartStore((state) => state.getItemCount())
-  const router = useRouter()
-  const pathname = usePathname()
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
+  const itemCount = useCartStore((state) => state.getItemCount());
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    const supabase = createClient()
+    setMounted(true);
+    const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-    })
+      setUser(data.user);
+    });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+      setUser(session?.user ?? null);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
@@ -57,9 +59,9 @@ export default function Header() {
             <Link
               href="/"
               className={`transition-colors font-medium text-sm lg:text-base ${
-                pathname === '/'
-                  ? 'text-blue-500'
-                  : 'text-white hover:text-blue-500'
+                pathname === "/"
+                  ? "text-blue-500"
+                  : "text-white hover:text-blue-500"
               }`}
             >
               Home
@@ -67,9 +69,9 @@ export default function Header() {
             <Link
               href="/products"
               className={`transition-colors font-medium text-sm lg:text-base ${
-                pathname === '/products'
-                  ? 'text-blue-500'
-                  : 'text-white hover:text-blue-500'
+                pathname === "/products"
+                  ? "text-blue-500"
+                  : "text-white hover:text-blue-500"
               }`}
             >
               Products
@@ -77,9 +79,9 @@ export default function Header() {
             <Link
               href="/products/new-arrivals"
               className={`transition-colors font-medium text-sm lg:text-base ${
-                pathname === '/products/new-arrivals'
-                  ? 'text-blue-500'
-                  : 'text-white hover:text-blue-500'
+                pathname === "/products/new-arrivals"
+                  ? "text-blue-500"
+                  : "text-white hover:text-blue-500"
               }`}
             >
               New Arrivals
@@ -92,7 +94,7 @@ export default function Header() {
               className="relative p-1.5 md:p-2 text-white hover:text-blue-500 transition-colors"
             >
               <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" />
-              {itemCount > 0 && (
+              {mounted && itemCount > 0 && (
                 <span className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center text-[10px] md:text-xs">
                   {itemCount}
                 </span>
@@ -113,7 +115,7 @@ export default function Header() {
                 >
                   <User className="w-5 h-5" />
                 </Link>
-                {user.user_metadata?.role === 'admin' && (
+                {user.user_metadata?.role === "admin" && (
                   <Link
                     href="/admin"
                     className="text-white hover:text-blue-500 transition-colors font-medium"
@@ -141,7 +143,11 @@ export default function Header() {
               className="md:hidden p-2 text-white"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
@@ -178,7 +184,7 @@ export default function Header() {
                 >
                   Profile
                 </Link>
-                {user.user_metadata?.role === 'admin' && (
+                {user.user_metadata?.role === "admin" && (
                   <Link
                     href="/admin"
                     className="block py-2 px-4 text-white hover:text-blue-500 hover:bg-gray-900 rounded-lg transition-colors"
@@ -189,8 +195,8 @@ export default function Header() {
                 )}
                 <button
                   onClick={() => {
-                    handleSignOut()
-                    setIsMenuOpen(false)
+                    handleSignOut();
+                    setIsMenuOpen(false);
                   }}
                   className="block w-full text-left py-2 px-4 text-white hover:text-blue-500 hover:bg-gray-900 rounded-lg transition-colors"
                 >
@@ -210,6 +216,5 @@ export default function Header() {
         )}
       </nav>
     </header>
-  )
+  );
 }
-

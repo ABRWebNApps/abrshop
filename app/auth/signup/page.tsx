@@ -45,7 +45,7 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
         },
       })
 
@@ -53,19 +53,19 @@ export default function SignupPage() {
         setError(error.message)
         setLoading(false)
       } else if (signUpData.user) {
-        // Check if email confirmation is required
-        if (signUpData.user.confirmed_at) {
-          // User is immediately confirmed (email confirmation disabled)
-          setSuccess('Account created successfully! Redirecting...')
-          setTimeout(() => {
-            router.push('/')
-            router.refresh()
-          }, 1500)
-        } else {
-          // Email confirmation required
-          setSuccess('Account created! Please check your email to verify your account.')
-          setLoading(false)
-        }
+        // Always require email verification
+        // Sign out the user immediately to prevent auto-login
+        await supabase.auth.signOut()
+        
+        setSuccess(
+          'Account created successfully! Please check your email to verify your account before signing in. You can close this page.'
+        )
+        setLoading(false)
+        
+        // Clear the form
+        setTimeout(() => {
+          router.push('/auth/login?message=Please verify your email to continue')
+        }, 3000)
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.')

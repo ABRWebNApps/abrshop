@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Package, FolderTree, Image as ImageIcon, ShoppingCart } from 'lucide-react'
+import { Package, FolderTree, Image as ImageIcon, ShoppingCart, Tag } from 'lucide-react'
 
 export default async function AdminLayout({
   children,
@@ -37,6 +37,13 @@ export default async function AdminLayout({
               >
                 <FolderTree className="w-5 h-5" />
                 <span>Categories</span>
+              </Link>
+              <Link
+                href="/admin/brands"
+                className="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
+              >
+                <Tag className="w-5 h-5" />
+                <span>Brands</span>
               </Link>
               <Link
                 href="/admin/banners"

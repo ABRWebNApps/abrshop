@@ -66,7 +66,7 @@ export default async function Home() {
               />
             ) : (
               <Image
-                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1920&q=80"
+                src="https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&q=80&w=2070"
                 alt="Black professionals with technology and gadgets"
                 fill
                 className="object-cover opacity-60"

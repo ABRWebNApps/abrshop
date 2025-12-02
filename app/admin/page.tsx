@@ -5,7 +5,7 @@ async function getProducts() {
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
-    .select('*, category:categories(*)')
+    .select('*, category:categories(*), brand:brands(*)')
     .order('created_at', { ascending: false })
 
   return data || []
@@ -18,9 +18,17 @@ async function getCategories() {
   return data || []
 }
 
+async function getBrands() {
+  const supabase = await createClient()
+  const { data } = await supabase.from('brands').select('*').order('name')
+
+  return data || []
+}
+
 export default async function AdminPage() {
   const products = await getProducts()
   const categories = await getCategories()
+  const brands = await getBrands()
 
   return (
     <div>
@@ -28,7 +36,7 @@ export default async function AdminPage() {
         <h1 className="text-3xl font-bold text-white mb-2">Product Management</h1>
         <p className="text-gray-400">Create, edit, and manage your products</p>
       </div>
-      <ProductManagement initialProducts={products} categories={categories} />
+      <ProductManagement initialProducts={products} categories={categories} initialBrands={brands} />
     </div>
   )
 }

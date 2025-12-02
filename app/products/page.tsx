@@ -44,13 +44,22 @@ async function getProducts(searchParams: SearchParams | undefined) {
     // Build the query with join
     let query = supabase
       .from('products')
-      .select('*, category:categories(*)')
+      .select('*, category:categories(*), brand:brands(*)')
       .gt('stock', 0)
 
     // Category filter
     const category = getParam('category')
     if (category) {
       query = query.eq('category_id', category)
+    }
+
+    // Brand filter
+    const brands = getParam('brands')
+    if (brands) {
+      const brandIds = brands.split(',').filter(Boolean)
+      if (brandIds.length > 0) {
+        query = query.in('brand_id', brandIds)
+      }
     }
 
     // Search

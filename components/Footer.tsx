@@ -3,20 +3,23 @@ import Image from 'next/image'
 
 export default function Footer() {
   return (
-    <footer className="bg-black border-t border-white/10 mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+    <footer className="bg-black border-t border-white/10 mt-12 sm:mt-16 md:mt-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12">
           <div>
-            <div className="flex items-center space-x-2 mb-4">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-4">
               <Image
                 src="/abrlogo.png"
                 alt="ABR TECH"
                 width={100}
                 height={30}
-                className="h-6 w-auto"
+                className="h-5 sm:h-6 w-auto flex-shrink-0"
               />
+              <span className="text-white font-semibold text-xs sm:text-sm md:text-base tracking-wide">
+                ABR TECHNOLOGIES LTD
+              </span>
             </div>
-            <p className="text-gray-400 text-sm leading-relaxed">
+            <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
               Premium technology for the modern professional. We curate the finest hardware from around the globe, ensuring quality, performance, and aesthetic excellence.
             </p>
           </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Upload } from 'lucide-react'
+import { Plus, Edit, Trash2, Upload, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Product, Category } from '@/types/database'
 import Image from 'next/image'
@@ -10,6 +10,11 @@ interface Brand {
   id: string
   name: string
   category_id: string
+}
+
+interface Tag {
+  id: string
+  name: string
 }
 
 interface ProductManagementProps {
@@ -29,6 +34,9 @@ export default function ProductManagement({
   const [loading, setLoading] = useState(false)
   const [brands, setBrands] = useState<Brand[]>(initialBrands)
   const [availableBrands, setAvailableBrands] = useState<Brand[]>([])
+  const [allTags, setAllTags] = useState<Tag[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [newTagName, setNewTagName] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -42,6 +50,44 @@ export default function ProductManagement({
   const [uploading, setUploading] = useState(false)
 
   const supabase = createClient()
+
+  // Load all tags
+  useEffect(() => {
+    const loadTags = async () => {
+      const { data } = await supabase
+        .from('tags')
+        .select('*')
+        .order('name')
+
+      if (data) {
+        setAllTags(data)
+      }
+    }
+
+    loadTags()
+  }, [supabase])
+
+  // Load product tags when editing
+  useEffect(() => {
+    const loadProductTags = async () => {
+      if (editingProduct) {
+        const { data } = await supabase
+          .from('product_tags')
+          .select('tag_id')
+          .eq('product_id', editingProduct.id)
+
+        if (data) {
+          setSelectedTags(data.map((pt: any) => pt.tag_id))
+        }
+      } else {
+        setSelectedTags([])
+      }
+    }
+
+    if (isModalOpen) {
+      loadProductTags()
+    }
+  }, [editingProduct, isModalOpen, supabase])
 
   // Load brands when category changes
   useEffect(() => {
@@ -90,6 +136,7 @@ export default function ProductManagement({
         images: [],
         is_new_arrival: false,
       })
+      setSelectedTags([])
     }
     setIsModalOpen(true)
   }
@@ -107,6 +154,53 @@ export default function ProductManagement({
       images: [],
       is_new_arrival: false,
     })
+    setSelectedTags([])
+    setNewTagName('')
+  }
+
+  const handleAddTag = async () => {
+    if (!newTagName.trim()) return
+
+    // Check if tag already exists
+    const existingTag = allTags.find(t => t.name.toLowerCase() === newTagName.trim().toLowerCase())
+    
+    if (existingTag) {
+      if (!selectedTags.includes(existingTag.id)) {
+        setSelectedTags([...selectedTags, existingTag.id])
+      }
+      setNewTagName('')
+      return
+    }
+
+    // Create new tag
+    const { data, error } = await supabase
+      .from('tags')
+      .insert({ name: newTagName.trim() })
+      .select()
+      .single()
+
+    if (error) {
+      alert('Error creating tag: ' + error.message)
+      return
+    }
+
+    if (data) {
+      setAllTags([...allTags, data])
+      setSelectedTags([...selectedTags, data.id])
+      setNewTagName('')
+    }
+  }
+
+  const handleToggleTag = (tagId: string) => {
+    if (selectedTags.includes(tagId)) {
+      setSelectedTags(selectedTags.filter(id => id !== tagId))
+    } else {
+      setSelectedTags([...selectedTags, tagId])
+    }
+  }
+
+  const handleRemoveTag = (tagId: string) => {
+    setSelectedTags(selectedTags.filter(id => id !== tagId))
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,11 +253,14 @@ export default function ProductManagement({
         is_new_arrival: formData.is_new_arrival,
       }
 
+      let productId: string
+
       if (editingProduct) {
+        productId = editingProduct.id
         const { error } = await supabase
           .from('products')
           .update(productData)
-          .eq('id', editingProduct.id)
+          .eq('id', productId)
 
         if (error) throw error
 
@@ -175,7 +272,30 @@ export default function ProductManagement({
 
         if (error) throw error
 
+        if (!data || data.length === 0) throw new Error('Failed to create product')
+        productId = data[0].id
         setProducts([...(data as Product[]), ...products])
+      }
+
+      // Handle tags
+      // First, delete all existing tags for this product
+      await supabase
+        .from('product_tags')
+        .delete()
+        .eq('product_id', productId)
+
+      // Then, insert new tags
+      if (selectedTags.length > 0) {
+        const tagInserts = selectedTags.map(tagId => ({
+          product_id: productId,
+          tag_id: tagId,
+        }))
+
+        const { error: tagError } = await supabase
+          .from('product_tags')
+          .insert(tagInserts)
+
+        if (tagError) throw tagError
       }
 
       handleCloseModal()
@@ -390,6 +510,84 @@ export default function ProductManagement({
                     )}
                   </div>
                 )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                  <div className="space-y-2">
+                    {/* Add new tag */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newTagName}
+                        onChange={(e) => setNewTagName(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleAddTag()
+                          }
+                        }}
+                        placeholder="Type tag name and press Enter"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddTag}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                      >
+                        Add
+                      </button>
+                    </div>
+
+                    {/* Selected tags */}
+                    {selectedTags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTags.map((tagId) => {
+                          const tag = allTags.find(t => t.id === tagId)
+                          if (!tag) return null
+                          return (
+                            <span
+                              key={tagId}
+                              className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                            >
+                              {tag.name}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTag(tagId)}
+                                className="hover:text-blue-600"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Available tags */}
+                    {allTags.length > 0 && (
+                      <div className="border border-gray-200 rounded-lg p-2 max-h-32 overflow-y-auto">
+                        <p className="text-xs text-gray-500 mb-2">Available tags:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {allTags
+                            .filter(tag => !selectedTags.includes(tag.id))
+                            .map((tag) => (
+                              <button
+                                key={tag.id}
+                                type="button"
+                                onClick={() => handleToggleTag(tag.id)}
+                                className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 transition-colors"
+                              >
+                                + {tag.name}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Tags help customers find products. Products will appear in search results when tags match.
+                  </p>
+                </div>
 
                 <div>
                   <label className="flex items-center space-x-2">

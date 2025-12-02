@@ -44,7 +44,7 @@ async function getProducts(searchParams: SearchParams | undefined) {
     // Build the query with join
     let query = supabase
       .from('products')
-      .select('*, category:categories(*), brand:brands(*)')
+      .select('*, category:categories(*), brand:brands(*), tags:product_tags(tag:tags(*))')
       .gt('stock', 0)
 
     // Category filter
@@ -62,10 +62,67 @@ async function getProducts(searchParams: SearchParams | undefined) {
       }
     }
 
-    // Search
+    // Search - includes name, description, brand name, and tags
     const search = getParam('search')
     if (search) {
-      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+      // Get all matching product IDs from different sources
+      const productIds = new Set<string>()
+
+      // 1. Products matching name or description
+      const { data: nameDescProducts } = await supabase
+        .from('products')
+        .select('id')
+        .or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+        .gt('stock', 0)
+
+      if (nameDescProducts) {
+        nameDescProducts.forEach((p: any) => productIds.add(p.id))
+      }
+
+      // 2. Products by brand name
+      const { data: matchingBrands } = await supabase
+        .from('brands')
+        .select('id')
+        .ilike('name', `%${search}%`)
+
+      if (matchingBrands && matchingBrands.length > 0) {
+        const brandIds = matchingBrands.map(b => b.id)
+        const { data: brandProducts } = await supabase
+          .from('products')
+          .select('id')
+          .in('brand_id', brandIds)
+          .gt('stock', 0)
+
+        if (brandProducts) {
+          brandProducts.forEach((p: any) => productIds.add(p.id))
+        }
+      }
+
+      // 3. Products by tags
+      const { data: matchingTags } = await supabase
+        .from('tags')
+        .select('id')
+        .ilike('name', `%${search}%`)
+
+      if (matchingTags && matchingTags.length > 0) {
+        const tagIds = matchingTags.map(t => t.id)
+        const { data: taggedProducts } = await supabase
+          .from('product_tags')
+          .select('product_id')
+          .in('tag_id', tagIds)
+
+        if (taggedProducts) {
+          taggedProducts.forEach((pt: any) => productIds.add(pt.product_id))
+        }
+      }
+
+      // Apply filter if we have matching products
+      if (productIds.size > 0) {
+        query = query.in('id', Array.from(productIds))
+      } else {
+        // Return empty if no matches
+        return []
+      }
     }
 
     // Sort

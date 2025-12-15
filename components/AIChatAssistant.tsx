@@ -149,11 +149,11 @@ export default function AIChatAssistant() {
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-[9999] w-full max-w-md h-[600px] md:h-[700px] bg-black border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-      style={{ zIndex: 9999 }}
+      className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] w-[calc(100vw-2rem)] max-w-md h-[calc(100vh-8rem)] md:h-[700px] bg-black border border-white/10 rounded-xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+      style={{ zIndex: 9999, maxHeight: "90vh" }}
     >
       {/* Header */}
-      <div className="bg-gray-900 border-b border-white/10 p-4 flex items-center justify-between">
+      <div className="bg-gray-900 border-b border-white/10 p-3 md:p-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-[#1e3a8a] via-[#3b82f6] to-[#cbd5e1] rounded-full flex items-center justify-center relative">
             <div className="absolute inset-0 bg-gradient-to-br from-[#1e3a8a] via-[#3b82f6] to-[#cbd5e1] rounded-full animate-pulse opacity-75"></div>
@@ -184,7 +184,7 @@ export default function AIChatAssistant() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 min-h-0">
         {messages.map((message, idx) => (
           <div
             key={idx}
@@ -193,13 +193,13 @@ export default function AIChatAssistant() {
             }`}
           >
             <div
-              className={`max-w-[85%] ${
+              className={`max-w-[90%] md:max-w-[85%] ${
                 message.role === "user"
-                  ? "bg-blue-500 text-white rounded-2xl rounded-tr-sm px-4 py-2"
-                  : "bg-gray-900 text-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 border border-white/10"
+                  ? "bg-blue-500 text-white rounded-2xl rounded-tr-sm px-3 py-2 md:px-4"
+                  : "bg-gray-900 text-gray-100 rounded-2xl rounded-tl-sm px-3 py-2 md:px-4 md:py-3 border border-white/10"
               }`}
             >
-              <p className="text-sm md:text-base whitespace-pre-wrap">
+              <p className="text-sm md:text-base whitespace-pre-wrap break-words">
                 {message.content}
               </p>
 
@@ -219,8 +219,8 @@ export default function AIChatAssistant() {
               {/* Recommendations */}
               {message.recommendations &&
                 message.recommendations.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    <p className="text-xs font-semibold text-purple-400 mb-2">
+                  <div className="mt-2 md:mt-3 space-y-2">
+                    <p className="text-xs font-semibold text-purple-400 mb-1 md:mb-2">
                       💡 You might also like:
                     </p>
                     {message.recommendations.map((product) => (
@@ -273,7 +273,7 @@ export default function AIChatAssistant() {
       {/* Input */}
       <form
         onSubmit={handleSend}
-        className="border-t border-white/10 p-4 bg-gray-900"
+        className="border-t border-white/10 p-3 md:p-4 bg-gray-900 flex-shrink-0"
       >
         <div className="flex gap-2">
           <input
@@ -281,23 +281,23 @@ export default function AIChatAssistant() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask me anything about products..."
-            className="flex-1 bg-gray-800 text-white placeholder-gray-500 rounded-lg px-4 py-2 text-sm md:text-base border border-white/10 focus:outline-none focus:border-blue-500"
+            placeholder="Ask me about products..."
+            className="flex-1 bg-gray-800 text-white placeholder-gray-500 rounded-lg px-3 md:px-4 py-2 text-sm border border-white/10 focus:outline-none focus:border-blue-500"
             disabled={loading}
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="w-10 h-10 bg-blue-500 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-10 h-10 bg-blue-500 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           >
             {loading ? (
-              <Loader2 className="w-5 h-5 text-white animate-spin" />
+              <Loader2 className="w-4 h-4 md:w-5 md:h-5 text-white animate-spin" />
             ) : (
-              <Send className="w-5 h-5 text-white" />
+              <Send className="w-4 h-4 md:w-5 md:h-5 text-white" />
             )}
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2 text-center">
+        <p className="text-xs text-gray-500 mt-2 text-center hidden md:block">
           Try: "Show me laptops under ₦2,000,000" or "Phones with good battery"
         </p>
       </form>

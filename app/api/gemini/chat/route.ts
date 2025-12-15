@@ -206,12 +206,11 @@ CRITICAL ACCURACY RULES:
 - ALWAYS mix Pidgin English with proper English in responses - be VARIED and DYNAMIC:
   * CRITICAL: NEVER repeat the same response message - always generate a NEW, UNIQUE response
   * Vary your responses - don't use the same phrase every time, even if the products are similar
-  * Use different phrases each time: "I don see some options for you o!", "Check dis ones out!", "Na these ones I find for you", "I don get am for you", "See wetin I find", "These ones na perfect match", "I don find exactly wetin you dey find", "Check these products wey I get", "Na good options wey I see for you"
+  * Use different phrases each time: "I found some options for you", "Check these out", "Here's what I found", "These should work for you", "I found exactly what you're looking for", "Check these products", "Here are some good options"
+  * Tone: Professional but relatable - mix Pidgin and English naturally but avoid overly dramatic endings like "o!"
+  * Examples: "I found some options for you", "Check these out - they look good", "Here's what I found", "These should work well for you"
   * Be creative and natural - mix Pidgin and English naturally and differently each response
-  * "This one na good choice" (This is a good choice)
-  * "You fit check am out" (You can check it out)
-  * "E go work well for you" (It will work well for you)
-  * "Na the best wey we get" (It's the best we have)
+  * Avoid ending messages with "o!" - it's too dramatic
   * Generate a UNIQUE message every single time - never copy previous responses
 - Be warm, helpful, and conversational - like a real Nigerian tech store assistant
 - Always return valid JSON, no explanations outside the JSON`;
@@ -360,23 +359,28 @@ CRITICAL ACCURACY RULES:
       });
     }
 
-    // Generate dynamic response - ensure it's always varied
+    // Generate dynamic response - ensure it's always varied (professional but relatable tone)
     const dynamicMessages = [
-      "I don find some great options for you o!",
-      "Check dis ones out, na good options!",
-      "See wetin I find for you here.",
-      "Na these ones I get for you, check am out.",
-      "I don see some products wey go work for you!",
-      "These ones na the best options wey I find.",
-      "I don get exactly wetin you dey find!",
-      "Check these products wey I see for you.",
-      "Na perfect match wey I find o!",
-      "These ones go work well for you, check am out.",
-      "I don see some good options wey fit interest you.",
-      "See wetin I get - na quality products!",
-      "These ones na top picks wey I find for you.",
-      "I don find some options wey go suit your needs.",
-      "Check am out - na good products wey I see!",
+      "I found some great options for you",
+      "Check these ones out, they're good options",
+      "Here are some products I found for you",
+      "These ones should work well for you, check them out",
+      "I found some products that might interest you",
+      "These are the best options I found",
+      "I got exactly what you're looking for",
+      "Check these products I found for you",
+      "Perfect match - here's what I found",
+      "These should work well for you, take a look",
+      "I found some good options that might interest you",
+      "Here are some quality products I found",
+      "These are top picks I found for you",
+      "I found some options that should suit your needs",
+      "Check these out - good products I found",
+      "Here are some matches I found",
+      "I found these options for you",
+      "These products should work for you",
+      "Here's what I found",
+      "Check these out - they look good",
     ];
 
     // Use AI response if it exists and is unique, otherwise use random fallback
@@ -388,22 +392,26 @@ CRITICAL ACCURACY RULES:
         dynamicMessages[Math.floor(Math.random() * dynamicMessages.length)];
     }
 
-    // If AI response matches a common phrase, sometimes replace it with random for variety
+    // If AI response matches a common phrase, replace it with random for variety
     const commonPhrases = [
-      "I don find some options for you o!",
-      "I found some great options for you!",
+      "i don find some options for you",
+      "i found some great options for you",
+      "i don find some options",
     ];
     if (
       commonPhrases.some((phrase) =>
         finalMessage.toLowerCase().includes(phrase.toLowerCase())
       )
     ) {
-      // 30% chance to replace with random message for variety
-      if (Math.random() < 0.3) {
+      // 50% chance to replace with random message for variety
+      if (Math.random() < 0.5) {
         finalMessage =
           dynamicMessages[Math.floor(Math.random() * dynamicMessages.length)];
       }
     }
+    
+    // Remove "o!" endings if present (too dramatic)
+    finalMessage = finalMessage.replace(/\s+o!?\s*$/i, "");
 
     return NextResponse.json({
       message: finalMessage,
@@ -780,9 +788,20 @@ function fallbackSearch(
     .map((id: string) => products.find((p: any) => p.id === id))
     .filter(Boolean);
 
-  let message = "I don find some options for you o!";
+  const fallbackMessages = [
+    "I found some options for you",
+    "Here are some products I found",
+    "Check these out - I found some options",
+    "These are some products that might interest you",
+  ];
+  let message = fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)];
   if (matchedProducts.length === 0) {
-    message = "I don see some products wey fit interest you! Check am out.";
+    const noMatchMessages = [
+      "I found some products that might interest you",
+      "Here are some options you might like",
+      "Check these out - they might work for you",
+    ];
+    message = noMatchMessages[Math.floor(Math.random() * noMatchMessages.length)];
   }
 
   return NextResponse.json({

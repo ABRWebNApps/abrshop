@@ -38,9 +38,9 @@ export default function ChatProductCard({
         isRecommendation ? "opacity-90 hover:opacity-100" : ""
       }`}
     >
-      <div className="bg-gray-900 rounded-lg border border-white/10 hover:border-white/20 transition-all p-3">
-        <div className="flex gap-3">
-          <div className="relative w-20 h-20 md:w-24 md:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-black">
+      <div className="bg-gray-900 rounded-lg border border-white/10 hover:border-white/20 transition-all p-2 md:p-3">
+        <div className="flex gap-2 md:gap-3">
+          <div className="relative w-16 h-16 md:w-24 md:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-black">
             <Image
               src={mainImage}
               alt={product.name}

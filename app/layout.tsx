@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AIChatAssistant from "@/components/AIChatAssistant";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -11,10 +12,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "ABR TECH - Quality Technology",
-  description: "Quality technology solutions for individuals and business owners. Reliable hardware and gadgets for your everyday needs.",
+  description:
+    "Quality technology solutions for individuals and business owners. Reliable hardware and gadgets for your everyday needs.",
   icons: {
-    icon: '/abrlogo.png',
-    apple: '/abrlogo.png',
+    icon: "/abrlogo.png",
+    apple: "/abrlogo.png",
   },
 };
 
@@ -33,10 +35,9 @@ export default function RootLayout({
       >
         <div className="min-h-screen flex flex-col bg-black">
           <Header />
-          <main className="flex-grow bg-black">
-            {children}
-          </main>
+          <main className="flex-grow bg-black">{children}</main>
           <Footer />
+          <AIChatAssistant />
         </div>
       </body>
     </html>

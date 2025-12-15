@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/ProductCard";
 import ProductSlider from "@/components/ProductSlider";
+import AISearch from "@/components/AISearch";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
@@ -285,38 +286,14 @@ export default async function Home() {
           Find exactly what you need.
         </h2>
         <p className="text-base md:text-lg lg:text-xl text-gray-400 mb-6 md:mb-8 px-4">
-          Our AI-powered assistant understands context. Just ask for what you're
-          looking for.
+          Our AI-powered assistant understands context. Chat with our assistant
+          (bottom right) or search below.
         </p>
-        <div className="max-w-2xl mx-auto px-4">
-          <div className="relative flex items-center bg-gray-900 rounded-full border border-white/10 p-3 md:p-4">
-            <span className="text-gray-400 mr-2 md:mr-3 text-sm md:text-base">
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="Ex: 'Professional laptop for video editing under ₦2,000,000'..."
-              className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm md:text-base"
-            />
-            <button className="ml-2 md:ml-4 w-8 h-8 md:w-10 md:h-10 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors flex-shrink-0">
-              <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-white" />
-            </button>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mt-4 md:mt-6">
-            <button className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-900 border border-white/10 rounded-full text-white text-xs md:text-sm hover:border-white/20 transition-colors">
-              Titanium Watch
-            </button>
-            <button className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-900 border border-white/10 rounded-full text-white text-xs md:text-sm hover:border-white/20 transition-colors">
-              Noise Cancelling
-            </button>
-            <button className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-900 border border-white/10 rounded-full text-white text-xs md:text-sm hover:border-white/20 transition-colors">
-              Gaming Setup
-            </button>
-            <button className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-900 border border-white/10 rounded-full text-white text-xs md:text-sm hover:border-white/20 transition-colors">
-              4K Monitors
-            </button>
-          </div>
-        </div>
+        <AISearch />
+        <p className="text-sm text-gray-500 mt-4 px-4">
+          💬 <span className="text-blue-400">Tip:</span> Click the chat button
+          in the bottom right corner for a conversational shopping experience!
+        </p>
 
         {/* Additional Product Layouts */}
         {products.length > 0 && (

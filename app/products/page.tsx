@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import ProductCard from "@/components/ProductCard";
 import { Suspense } from "react";
 import ProductFilters from "@/components/ProductFilters";
+import AIProductWrapper from "@/components/AIProductWrapper";
 
 type SearchParams = { [key: string]: string | string[] | undefined };
 
@@ -378,24 +378,7 @@ export default async function ProductsPage({
           </div>
         </div>
 
-        {products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                showNewBadge={true}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20 bg-gray-900 rounded-2xl border border-white/10">
-            <p className="text-gray-400 text-lg mb-4">No products found.</p>
-            <p className="text-gray-500">
-              Try adjusting your filters or search terms.
-            </p>
-          </div>
-        )}
+        <AIProductWrapper products={products} />
       </div>
     </div>
   );

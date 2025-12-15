@@ -19,7 +19,7 @@ export default function AIChatAssistant() {
     {
       role: "assistant",
       content:
-        "Hi! I'm your AI shopping assistant. 👋\n\nI can help you find the perfect products! Just tell me what you're looking for - for example:\n• \"I need a laptop for video editing under $2000\"\n• \"Show me gifts for my mom who loves cooking\"\n• \"What do you have for a home office?\"\n\nWhat can I help you find today?",
+        'Wahala! Na me be Athena, your smart AI shopping assistant for tech products. 👋\n\nI fit help you find the perfect gadgets wey you dey find! Just tell me wetin you want - for example:\n• "I need laptop for video editing under ₦2,000,000"\n• "Show me phones wey get good camera"\n• "Wetin you get for gaming setup?"\n• "I need wireless earpiece for my phone"\n\nWetin you want make I help you find today?',
       timestamp: new Date(),
     },
   ]);
@@ -48,7 +48,7 @@ export default function AIChatAssistant() {
 
     const userMessage = input.trim();
     setInput("");
-    
+
     // Add user message
     const newUserMessage: Message = {
       role: "user",
@@ -119,27 +119,59 @@ export default function AIChatAssistant() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 md:w-16 md:h-16 bg-blue-500 hover:bg-blue-600 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
-        aria-label="Open AI Assistant"
+        className="fixed bottom-6 right-6 z-[9999] w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 group relative overflow-hidden cursor-pointer"
+        aria-label="Open Athena AI Assistant"
+        style={{ zIndex: 9999, position: "fixed" }}
       >
-        <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-white" />
+        {/* Navy blue to silver gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1e3a8a] via-[#3b82f6] to-[#cbd5e1] rounded-full"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1e40af] via-[#60a5fa] to-[#e2e8f0] rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1e3a8a] via-[#2563eb] to-[#94a3b8] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        {/* Animated icon with multiple effects */}
+        <div className="relative z-10">
+          <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-white drop-shadow-lg animate-sparkle" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-white/30 blur-sm animate-pulse-slow" />
+          </div>
+        </div>
+        {/* Pulse ring effect with navy blue */}
+        <div className="absolute inset-0 rounded-full border-2 border-[#3b82f6]/50 animate-ping"></div>
+        {/* Rotating glow effect */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-[#60a5fa]/20 to-transparent animate-spin-slow"></div>
+        {/* Tooltip */}
+        <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-white/10">
+          Chat with Athena AI
+          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+        </div>
       </button>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-full max-w-md h-[600px] md:h-[700px] bg-black border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+    <div
+      className="fixed bottom-6 right-6 z-[9999] w-full max-w-md h-[600px] md:h-[700px] bg-black border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+      style={{ zIndex: 9999 }}
+    >
       {/* Header */}
       <div className="bg-gray-900 border-b border-white/10 p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 bg-gradient-to-br from-[#1e3a8a] via-[#3b82f6] to-[#cbd5e1] rounded-full flex items-center justify-center relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1e3a8a] via-[#3b82f6] to-[#cbd5e1] rounded-full animate-pulse opacity-75"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1e40af] via-[#60a5fa] to-[#e2e8f0] rounded-full blur-sm"></div>
+            <div className="relative z-10">
+              <Sparkles className="w-4 h-4 text-white animate-sparkle" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white/30 blur-sm animate-pulse-slow" />
+              </div>
+            </div>
           </div>
           <div>
             <h3 className="font-semibold text-white text-sm md:text-base">
-              AI Shopping Assistant
+              Athena AI
             </h3>
-            <p className="text-xs text-gray-400">Always here to help!</p>
+            <p className="text-xs text-gray-400">
+              Your smart tech shopping assistant
+            </p>
           </div>
         </div>
         <button
@@ -266,10 +298,9 @@ export default function AIChatAssistant() {
           </button>
         </div>
         <p className="text-xs text-gray-500 mt-2 text-center">
-          Try: "Show me laptops under $2000" or "Gifts for cooking enthusiasts"
+          Try: "Show me laptops under ₦2,000,000" or "Phones with good battery"
         </p>
       </form>
     </div>
   );
 }
-

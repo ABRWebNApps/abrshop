@@ -63,11 +63,25 @@ export default function LoginPage() {
         await supabase.auth.signOut()
         setLoading(false)
       } else {
-        router.push('/')
+        // Check for redirect URL
+        const params = new URLSearchParams(window.location.search)
+        const redirectUrl = params.get('redirect') || '/'
+        router.push(redirectUrl)
         router.refresh()
       }
     }
   }
+
+  // Check for redirect URL
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const redirect = params.get('redirect')
+    if (redirect) {
+      setRedirectUrl(redirect)
+    }
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8">
@@ -76,9 +90,17 @@ export default function LoginPage() {
           <h2 className="mt-6 text-center text-3xl font-bold text-white">
             Sign in to your account
           </h2>
+          {redirectUrl === '/checkout' && (
+            <p className="mt-2 text-center text-sm text-blue-400 bg-blue-900/20 border border-blue-500/50 px-4 py-2 rounded-lg">
+              You need to sign in to proceed with checkout
+            </p>
+          )}
           <p className="mt-2 text-center text-sm text-gray-400">
             Or{' '}
-            <Link href="/auth/signup" className="font-medium text-blue-500 hover:text-blue-400">
+            <Link 
+              href={redirectUrl ? `/auth/signup?redirect=${encodeURIComponent(redirectUrl)}` : "/auth/signup"} 
+              className="font-medium text-blue-500 hover:text-blue-400"
+            >
               create a new account
             </Link>
           </p>

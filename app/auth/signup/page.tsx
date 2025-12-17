@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -40,12 +40,16 @@ export default function SignupPage() {
     setSuccess(null)
 
     try {
+      // Get redirect URL from query params
+      const params = new URLSearchParams(window.location.search)
+      const redirectUrl = params.get('redirect') || '/'
+      
       const supabase = createClient()
       const { data: signUpData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?type=signup&redirect=${encodeURIComponent(redirectUrl)}`,
         },
       })
 
@@ -62,9 +66,9 @@ export default function SignupPage() {
         )
         setLoading(false)
         
-        // Clear the form
+        // Clear the form and redirect to login with redirect URL
         setTimeout(() => {
-          router.push('/auth/login?message=Please verify your email to continue')
+          router.push(`/auth/login?message=Please verify your email to continue&redirect=${encodeURIComponent(redirectUrl)}`)
         }, 3000)
       }
     } catch (err) {
@@ -73,6 +77,17 @@ export default function SignupPage() {
     }
   }
 
+  // Check for redirect URL
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const redirect = params.get('redirect')
+    if (redirect) {
+      setRedirectUrl(redirect)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -80,9 +95,17 @@ export default function SignupPage() {
           <h2 className="mt-6 text-center text-3xl font-bold text-white">
             Create your account
           </h2>
+          {redirectUrl === '/checkout' && (
+            <p className="mt-2 text-center text-sm text-blue-400 bg-blue-900/20 border border-blue-500/50 px-4 py-2 rounded-lg">
+              You need to create an account to proceed with checkout
+            </p>
+          )}
           <p className="mt-2 text-center text-sm text-gray-400">
             Or{' '}
-            <Link href="/auth/login" className="font-medium text-blue-500 hover:text-blue-400">
+            <Link 
+              href={redirectUrl ? `/auth/login?redirect=${encodeURIComponent(redirectUrl)}` : "/auth/login"} 
+              className="font-medium text-blue-500 hover:text-blue-400"
+            >
               sign in to existing account
             </Link>
           </p>

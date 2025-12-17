@@ -28,6 +28,7 @@ export default function CheckoutPage() {
   const clearCart = useCartStore((state) => state.clearCart)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true)
   const router = useRouter()
 
   const {
@@ -40,20 +41,30 @@ export default function CheckoutPage() {
   })
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUser(data.user)
-        setValue('email', data.user.email || '')
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.getUser()
+      
+      if (error || !data.user) {
+        // User is not authenticated, redirect to signup with return URL
+        router.push(`/auth/signup?redirect=/checkout`)
+        return
       }
-    })
-  }, [setValue])
+
+      // User is authenticated
+      setUser(data.user)
+      setValue('email', data.user.email || '')
+      setCheckingAuth(false)
+    }
+
+    checkAuth()
+  }, [setValue, router])
 
   useEffect(() => {
-    if (items.length === 0) {
+    if (items.length === 0 && !checkingAuth) {
       router.push('/cart')
     }
-  }, [items, router])
+  }, [items, router, checkingAuth])
 
   const onSubmit = async (data: CheckoutFormData) => {
     setLoading(true)
@@ -186,6 +197,18 @@ export default function CheckoutPage() {
       alert(errorMessage)
       setLoading(false)
     }
+  }
+
+  // Show loading state while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   if (items.length === 0) {

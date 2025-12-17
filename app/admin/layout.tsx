@@ -11,10 +11,20 @@ export default async function AdminLayout({
   const supabase = await createClient()
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser()
 
-  if (!user || user.user_metadata?.role !== 'admin') {
+  // Double-check authentication (middleware should catch this, but extra security)
+  if (authError || !user) {
     redirect('/auth/login?redirect=/admin')
+  }
+
+  // Double-check admin role (middleware should catch this, but extra security)
+  const userRole = user.user_metadata?.role
+  if (userRole !== 'admin') {
+    // Log unauthorized access attempt (in production, you might want to log this to a security service)
+    console.warn(`Unauthorized admin access attempt by user: ${user.email} (ID: ${user.id})`)
+    redirect('/?error=unauthorized')
   }
 
   return (

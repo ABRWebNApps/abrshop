@@ -29,7 +29,29 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Protect admin routes
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    // Check if user is authenticated
+    if (!user) {
+      // Redirect to login with return URL
+      const redirectUrl = new URL('/auth/login', request.url);
+      redirectUrl.searchParams.set('redirect', '/admin');
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Check if user has admin role
+    const userRole = user.user_metadata?.role;
+    if (userRole !== 'admin') {
+      // Unauthorized access attempt - redirect to home with error
+      const redirectUrl = new URL('/', request.url);
+      redirectUrl.searchParams.set('error', 'unauthorized');
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
 
   return supabaseResponse;
 }

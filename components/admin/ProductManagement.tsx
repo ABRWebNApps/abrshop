@@ -430,7 +430,7 @@ export default function ProductManagement({
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                   />
                 </div>
 
@@ -443,7 +443,7 @@ export default function ProductManagement({
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                   />
                 </div>
 
@@ -456,7 +456,7 @@ export default function ProductManagement({
                       required
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     />
                   </div>
                   <div>
@@ -466,7 +466,7 @@ export default function ProductManagement({
                       required
                       value={formData.stock}
                       onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     />
                   </div>
                 </div>
@@ -477,11 +477,11 @@ export default function ProductManagement({
                     required
                     value={formData.category_id}
                     onChange={(e) => setFormData({ ...formData, category_id: e.target.value, brand_id: '' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                   >
-                    <option value="">Select a category</option>
+                    <option value="" className="text-gray-900 bg-white">Select a category</option>
                     {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
+                      <option key={cat.id} value={cat.id} className="text-gray-900 bg-white">
                         {cat.name}
                       </option>
                     ))}
@@ -494,11 +494,11 @@ export default function ProductManagement({
                     <select
                       value={formData.brand_id}
                       onChange={(e) => setFormData({ ...formData, brand_id: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     >
-                      <option value="">No Brand</option>
+                      <option value="" className="text-gray-900 bg-white">No Brand</option>
                       {availableBrands.map((brand) => (
-                        <option key={brand.id} value={brand.id}>
+                        <option key={brand.id} value={brand.id} className="text-gray-900 bg-white">
                           {brand.name}
                         </option>
                       ))}
@@ -527,7 +527,7 @@ export default function ProductManagement({
                           }
                         }}
                         placeholder="Type tag name and press Enter"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6] text-sm"
                       />
                       <button
                         type="button"

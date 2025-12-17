@@ -276,7 +276,7 @@ export default function BannerManagement({ initialBanners }: BannerManagementPro
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                   />
                 </div>
 
@@ -286,7 +286,7 @@ export default function BannerManagement({ initialBanners }: BannerManagementPro
                     type="text"
                     value={formData.subtitle}
                     onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                   />
                 </div>
 
@@ -319,7 +319,7 @@ export default function BannerManagement({ initialBanners }: BannerManagementPro
                       type="text"
                       value={formData.button_text}
                       onChange={(e) => setFormData({ ...formData, button_text: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     />
                   </div>
                   <div>
@@ -331,7 +331,7 @@ export default function BannerManagement({ initialBanners }: BannerManagementPro
                       value={formData.button_link}
                       onChange={(e) => setFormData({ ...formData, button_link: e.target.value })}
                       placeholder="/products"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     />
                   </div>
                 </div>
@@ -345,7 +345,7 @@ export default function BannerManagement({ initialBanners }: BannerManagementPro
                       type="date"
                       value={formData.start_date}
                       onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     />
                   </div>
                   <div>
@@ -354,7 +354,7 @@ export default function BannerManagement({ initialBanners }: BannerManagementPro
                       type="date"
                       value={formData.end_date}
                       onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     />
                   </div>
                 </div>

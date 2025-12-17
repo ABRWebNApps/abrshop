@@ -184,11 +184,11 @@ export default function BrandManagement({ initialBrands, categories }: BrandMana
                     required
                     value={formData.category_id}
                     onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                    className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                   >
-                    <option value="">Select a category</option>
+                    <option value="" className="bg-black text-white">Select a category</option>
                     {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
+                      <option key={category.id} value={category.id} className="bg-black text-white">
                         {category.name}
                       </option>
                     ))}
@@ -202,7 +202,7 @@ export default function BrandManagement({ initialBrands, categories }: BrandMana
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     placeholder="e.g., Samsung, iPhone, Infinix"
                   />
                 </div>

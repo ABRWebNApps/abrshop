@@ -175,10 +175,10 @@ export default function BannerManagement({ initialBanners }: BannerManagementPro
   return (
     <div>
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-gray-900">All Banners</h2>
+        <h2 className="text-2xl font-semibold text-white">All Banners</h2>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:shadow-lg transition-all"
+          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#3b82f6] text-white rounded-lg hover:shadow-lg hover:from-[#1e40af] hover:to-[#60a5fa] transition-all"
         >
           <Plus className="w-5 h-5" />
           <span>Add Banner</span>
@@ -382,7 +382,7 @@ export default function BannerManagement({ initialBanners }: BannerManagementPro
                   <button
                     type="submit"
                     disabled={loading || !formData.image_url}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:shadow-lg disabled:opacity-50"
+                    className="px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#3b82f6] text-white rounded-lg hover:shadow-lg hover:from-[#1e40af] hover:to-[#60a5fa] disabled:opacity-50 transition-all"
                   >
                     {loading ? 'Saving...' : editingBanner ? 'Update' : 'Create'}
                   </button>

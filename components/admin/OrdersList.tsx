@@ -102,13 +102,13 @@ export default function OrdersList({ initialOrders }: OrdersListProps) {
                 <select
                   value={order.status}
                   onChange={(e) => updateOrderStatus(order.id, e.target.value as Order['status'])}
-                  className="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-[#3b82f6] min-w-[120px]"
                 >
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="pending" className="text-gray-900 bg-white">Pending</option>
+                  <option value="processing" className="text-gray-900 bg-white">Processing</option>
+                  <option value="shipped" className="text-gray-900 bg-white">Shipped</option>
+                  <option value="delivered" className="text-gray-900 bg-white">Delivered</option>
+                  <option value="cancelled" className="text-gray-900 bg-white">Cancelled</option>
                 </select>
               </td>
             </tr>

@@ -116,7 +116,7 @@ export default function BrandManagement({ initialBrands, categories }: BrandMana
         <h2 className="text-2xl font-semibold text-white">All Brands</h2>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#3b82f6] text-white rounded-lg hover:shadow-lg hover:from-[#1e40af] hover:to-[#60a5fa] transition-all"
         >
           <Plus className="w-5 h-5" />
           <span>Add Brand</span>
@@ -151,7 +151,7 @@ export default function BrandManagement({ initialBrands, categories }: BrandMana
                   <div className="flex items-center justify-end space-x-2">
                     <button
                       onClick={() => handleOpenModal(brand)}
-                      className="text-blue-400 hover:text-blue-300 p-2"
+                      className="text-[#3b82f6] hover:text-[#60a5fa] p-2 transition-colors"
                     >
                       <Edit className="w-5 h-5" />
                     </button>
@@ -218,7 +218,7 @@ export default function BrandManagement({ initialBrands, categories }: BrandMana
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                    className="px-4 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#3b82f6] text-white rounded-lg hover:from-[#1e40af] hover:to-[#60a5fa] disabled:opacity-50 transition-all"
                   >
                     {loading ? 'Saving...' : editingBrand ? 'Update' : 'Create'}
                   </button>

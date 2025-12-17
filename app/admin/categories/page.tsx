@@ -14,8 +14,8 @@ export default async function CategoriesPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Category Management</h1>
-        <p className="text-gray-600">Create, edit, and manage product categories</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Category Management</h1>
+        <p className="text-gray-400">Create, edit, and manage product categories</p>
       </div>
       <CategoryManagement initialCategories={categories} />
     </div>

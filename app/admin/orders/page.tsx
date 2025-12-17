@@ -17,8 +17,8 @@ export default async function OrdersPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Orders</h1>
-        <p className="text-gray-600">View and manage customer orders</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Orders</h1>
+        <p className="text-gray-400">View and manage customer orders</p>
       </div>
       <OrdersList initialOrders={orders} />
     </div>

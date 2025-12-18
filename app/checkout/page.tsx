@@ -35,6 +35,8 @@ function CheckoutPageContent() {
   const [selectedCountry, setSelectedCountry] = useState<string>('')
   const [availableStates, setAvailableStates] = useState<State[]>([])
   const [existingOrderId, setExistingOrderId] = useState<string | null>(null)
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -137,6 +139,35 @@ function CheckoutPageContent() {
     setValue('country', address.country || 'NG')
   }
 
+  const handleCancelOrder = async () => {
+    if (!currentOrderId || cancelling) return
+
+    setCancelling(true)
+    const supabase = createClient()
+
+    try {
+      // Update order status to cancelled
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', currentOrderId)
+
+      if (error) {
+        console.error('Error cancelling order:', error)
+        alert('Failed to cancel order. Please try again.')
+        setCancelling(false)
+        return
+      }
+
+      // Redirect to order page showing cancelled status
+      router.push(`/orders/${currentOrderId}?status=cancelled`)
+    } catch (error: any) {
+      console.error('Error cancelling order:', error)
+      alert('Failed to cancel order. Please try again.')
+      setCancelling(false)
+    }
+  }
+
   const onSubmit = async (data: CheckoutFormData) => {
     setLoading(true)
     const supabase = createClient()
@@ -233,6 +264,9 @@ function CheckoutPageContent() {
       if (!order) {
         throw new Error('Order was not created successfully')
       }
+
+      // Store order ID for potential cancellation
+      setCurrentOrderId(order.id)
 
       // Create order items (only if this is a new order, not resuming)
       if (!existingOrderId) {
@@ -563,13 +597,25 @@ function CheckoutPageContent() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Processing...' : 'Place Order'}
-              </button>
+              <div className="space-y-3">
+                <button
+                  type="submit"
+                  disabled={loading || cancelling}
+                  className="w-full py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Processing...' : 'Place Order'}
+                </button>
+                {loading && currentOrderId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelOrder}
+                    disabled={cancelling}
+                    className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
+                  >
+                    {cancelling ? 'Cancelling...' : 'Cancel Order'}
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 

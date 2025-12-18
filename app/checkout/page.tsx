@@ -9,6 +9,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Image from 'next/image'
 import { formatCurrency } from '@/lib/utils/currency'
+import { countriesData, getStatesByCountryCode, type Country, type State } from '@/lib/data/countries-states'
+import { MapPin, ChevronDown } from 'lucide-react'
 
 const checkoutSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -16,7 +18,7 @@ const checkoutSchema = z.object({
   address: z.string().min(5, 'Address must be at least 5 characters'),
   city: z.string().min(2, 'City is required'),
   state: z.string().min(2, 'State is required'),
-  zip: z.string().min(5, 'ZIP code is required'),
+  zip: z.string().optional(),
   country: z.string().min(2, 'Country is required'),
 })
 
@@ -29,6 +31,9 @@ export default function CheckoutPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([])
+  const [selectedCountry, setSelectedCountry] = useState<string>('')
+  const [availableStates, setAvailableStates] = useState<State[]>([])
   const router = useRouter()
 
   const {
@@ -36,9 +41,15 @@ export default function CheckoutPage() {
     handleSubmit,
     formState: { errors },
     setValue,
+    watch,
   } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
+    defaultValues: {
+      country: 'NG', // Default to Nigeria
+    },
   })
+
+  const watchedCountry = watch('country')
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -54,17 +65,50 @@ export default function CheckoutPage() {
       // User is authenticated
       setUser(data.user)
       setValue('email', data.user.email || '')
+      
+      // Load saved addresses
+      const { data: addresses } = await supabase
+        .from('user_addresses')
+        .select('*')
+        .eq('user_id', data.user.id)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: false })
+      
+      if (addresses && addresses.length > 0) {
+        setSavedAddresses(addresses)
+      }
+      
       setCheckingAuth(false)
     }
 
     checkAuth()
   }, [setValue, router])
 
+  // Update available states when country changes
+  useEffect(() => {
+    if (watchedCountry) {
+      const states = getStatesByCountryCode(watchedCountry)
+      setAvailableStates(states)
+      setSelectedCountry(watchedCountry)
+      // Reset state when country changes
+      setValue('state', '')
+    }
+  }, [watchedCountry, setValue])
+
   useEffect(() => {
     if (items.length === 0 && !checkingAuth) {
       router.push('/cart')
     }
   }, [items, router, checkingAuth])
+
+  const loadAddress = (address: any) => {
+    setValue('name', address.name)
+    setValue('address', address.address)
+    setValue('city', address.city)
+    setValue('state', address.state)
+    setValue('zip', address.zip || '')
+    setValue('country', address.country || 'NG')
+  }
 
   const onSubmit = async (data: CheckoutFormData) => {
     setLoading(true)
@@ -84,7 +128,7 @@ export default function CheckoutPage() {
             address: data.address,
             city: data.city,
             state: data.state,
-            zip: data.zip,
+            zip: data.zip || '',
             country: data.country,
           },
         })
@@ -223,7 +267,35 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Shipping Information</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Shipping Information</h2>
+                {savedAddresses.length > 0 && (
+                  <div className="relative">
+                    <select
+                      onChange={(e) => {
+                        const addressId = e.target.value
+                        if (addressId) {
+                          const address = savedAddresses.find((a) => a.id === addressId)
+                          if (address) {
+                            loadAddress(address)
+                          }
+                        }
+                        e.target.value = '' // Reset select
+                      }}
+                      className="appearance-none bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 pr-8 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Use Saved Address</option>
+                      {savedAddresses.map((address) => (
+                        <option key={address.id} value={address.id}>
+                          {address.name} - {address.city}, {address.state}
+                          {address.is_default && ' (Default)'}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-700 pointer-events-none" />
+                  </div>
+                )}
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -282,11 +354,27 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-                  <input
-                    type="text"
-                    {...register('state')}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder:text-gray-400"
-                  />
+                  <div className="relative">
+                    <select
+                      {...register('state')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white appearance-none cursor-pointer"
+                      disabled={!selectedCountry || availableStates.length === 0}
+                    >
+                      <option value="">
+                        {!selectedCountry
+                          ? 'Select country first'
+                          : availableStates.length === 0
+                          ? 'No states available'
+                          : 'Select state'}
+                      </option>
+                      {availableStates.map((state) => (
+                        <option key={state.code} value={state.name}>
+                          {state.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
                   {errors.state && (
                     <p className="text-red-600 text-sm mt-1">{errors.state.message}</p>
                   )}
@@ -295,11 +383,14 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ZIP Code <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+                  </label>
                   <input
                     type="text"
                     {...register('zip')}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder:text-gray-400"
+                    placeholder="Enter ZIP/Postal code"
                   />
                   {errors.zip && (
                     <p className="text-red-600 text-sm mt-1">{errors.zip.message}</p>
@@ -308,11 +399,19 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                  <input
-                    type="text"
-                    {...register('country')}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder:text-gray-400"
-                  />
+                  <div className="relative">
+                    <select
+                      {...register('country')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white appearance-none cursor-pointer"
+                    >
+                      {countriesData.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
                   {errors.country && (
                     <p className="text-red-600 text-sm mt-1">{errors.country.message}</p>
                   )}

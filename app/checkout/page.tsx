@@ -1,9 +1,9 @@
 'use client'
 
 import { useCartStore } from '@/store/cart-store'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -24,7 +24,7 @@ const checkoutSchema = z.object({
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const items = useCartStore((state) => state.items)
   const getTotal = useCartStore((state) => state.getTotal)
   const clearCart = useCartStore((state) => state.clearCart)
@@ -34,7 +34,9 @@ export default function CheckoutPage() {
   const [savedAddresses, setSavedAddresses] = useState<any[]>([])
   const [selectedCountry, setSelectedCountry] = useState<string>('')
   const [availableStates, setAvailableStates] = useState<State[]>([])
+  const [existingOrderId, setExistingOrderId] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const {
     register,
@@ -66,6 +68,31 @@ export default function CheckoutPage() {
       setUser(data.user)
       setValue('email', data.user.email || '')
       
+      // Check if we're resuming an existing order
+      const orderId = searchParams.get('orderId')
+      if (orderId) {
+        setExistingOrderId(orderId)
+        // Load existing order data
+        const { data: order } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .eq('user_id', data.user.id)
+          .single()
+        
+        if (order && order.status === 'pending') {
+          // Pre-fill form with order data
+          if (order.shipping_address) {
+            setValue('name', order.shipping_address.name || '')
+            setValue('address', order.shipping_address.address || '')
+            setValue('city', order.shipping_address.city || '')
+            setValue('state', order.shipping_address.state || '')
+            setValue('zip', order.shipping_address.zip || '')
+            setValue('country', order.shipping_address.country || 'NG')
+          }
+        }
+      }
+      
       // Load saved addresses
       const { data: addresses } = await supabase
         .from('user_addresses')
@@ -82,7 +109,7 @@ export default function CheckoutPage() {
     }
 
     checkAuth()
-  }, [setValue, router])
+  }, [setValue, router, searchParams])
 
   // Update available states when country changes
   useEffect(() => {
@@ -115,25 +142,88 @@ export default function CheckoutPage() {
     const supabase = createClient()
 
     try {
-      // Create order first (status: pending, will be updated after payment)
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id || null,
-          email: data.email,
-          total: getTotal(),
-          status: 'pending',
-          shipping_address: {
-            name: data.name,
-            address: data.address,
-            city: data.city,
-            state: data.state,
-            zip: data.zip || '',
-            country: data.country,
-          },
-        })
-        .select()
-        .single()
+      let order
+      let orderError
+
+      // If resuming an existing order, update it instead of creating new one
+      if (existingOrderId) {
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', existingOrderId)
+          .eq('user_id', user?.id)
+          .single()
+
+        if (existingOrder && existingOrder.status === 'pending') {
+          // Update existing order
+          const { data: updatedOrder, error: updateError } = await supabase
+            .from('orders')
+            .update({
+              email: data.email,
+              total: getTotal(),
+              shipping_address: {
+                name: data.name,
+                address: data.address,
+                city: data.city,
+                state: data.state,
+                zip: data.zip || '',
+                country: data.country,
+              },
+            })
+            .eq('id', existingOrderId)
+            .select()
+            .single()
+          
+          order = updatedOrder
+          orderError = updateError
+        } else {
+          // Order doesn't exist or is not pending, create new one
+          const { data: newOrder, error: newOrderError } = await supabase
+            .from('orders')
+            .insert({
+              user_id: user?.id || null,
+              email: data.email,
+              total: getTotal(),
+              status: 'pending',
+              shipping_address: {
+                name: data.name,
+                address: data.address,
+                city: data.city,
+                state: data.state,
+                zip: data.zip || '',
+                country: data.country,
+              },
+            })
+            .select()
+            .single()
+          
+          order = newOrder
+          orderError = newOrderError
+        }
+      } else {
+        // Create new order
+        const { data: newOrder, error: newOrderError } = await supabase
+          .from('orders')
+          .insert({
+            user_id: user?.id || null,
+            email: data.email,
+            total: getTotal(),
+            status: 'pending',
+            shipping_address: {
+              name: data.name,
+              address: data.address,
+              city: data.city,
+              state: data.state,
+              zip: data.zip || '',
+              country: data.country,
+            },
+          })
+          .select()
+          .single()
+        
+        order = newOrder
+        orderError = newOrderError
+      }
 
       if (orderError) {
         console.error('Order creation error:', orderError)
@@ -144,19 +234,44 @@ export default function CheckoutPage() {
         throw new Error('Order was not created successfully')
       }
 
-      // Create order items
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.product.id,
-        quantity: item.quantity,
-        price: item.product.price,
-      }))
+      // Create order items (only if this is a new order, not resuming)
+      if (!existingOrderId) {
+        const orderItems = items.map((item) => ({
+          order_id: order.id,
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price,
+        }))
 
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
+        const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
 
-      if (itemsError) {
-        console.error('Order items creation error:', itemsError)
-        throw new Error(itemsError.message || `Failed to create order items: ${itemsError.code || 'Unknown error'}`)
+        if (itemsError) {
+          console.error('Order items creation error:', itemsError)
+          throw new Error(itemsError.message || `Failed to create order items: ${itemsError.code || 'Unknown error'}`)
+        }
+      } else {
+        // For existing orders, ensure order items exist (they should already exist)
+        const { data: existingItems } = await supabase
+          .from('order_items')
+          .select('id')
+          .eq('order_id', order.id)
+        
+        if (!existingItems || existingItems.length === 0) {
+          // If no items exist, create them from cart
+          const orderItems = items.map((item) => ({
+            order_id: order.id,
+            product_id: item.product.id,
+            quantity: item.quantity,
+            price: item.product.price,
+          }))
+
+          const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
+
+          if (itemsError) {
+            console.error('Order items creation error:', itemsError)
+            throw new Error(itemsError.message || `Failed to create order items: ${itemsError.code || 'Unknown error'}`)
+          }
+        }
       }
 
       // Initialize Paystack payment
@@ -208,13 +323,43 @@ export default function CheckoutPage() {
         // Dynamically import PaystackPop only on client side
         const PaystackPop = (await import('@paystack/inline-js')).default
         const paystack = new PaystackPop()
+        
+        // Store order ID for potential redirect
+        const currentOrderId = order.id
+
+        // Set up window focus listener to detect when popup closes
+        const handleWindowFocus = () => {
+          // When window regains focus, check if we're still on checkout
+          // If popup was closed without payment, Paystack may not call callback
+          // So we check after a short delay
+          setTimeout(() => {
+            // Check if we're still on checkout page and still loading
+            // This means popup was likely closed without completing payment
+            if (window.location.pathname === '/checkout' && loading) {
+              console.log('Popup likely closed without payment, redirecting to order page')
+              setLoading(false)
+              router.push(`/orders/${currentOrderId}?payment=cancelled`)
+            }
+          }, 2000) // Wait 2 seconds to see if callback fires
+        }
+
+        window.addEventListener('focus', handleWindowFocus)
+
+        // Open payment popup
         paystack.resumeTransaction(paymentData.access_code)
         
         console.log('Paystack popup opened successfully')
         
-        // Don't set loading to false here - let the popup handle the flow
-        // The callback will handle redirecting after payment
-        // The popup will redirect to callback_url after payment
+        // Clean up listener after 10 minutes (payment should complete by then)
+        const cleanupTimeout = setTimeout(() => {
+          window.removeEventListener('focus', handleWindowFocus)
+        }, 600000) // 10 minutes
+
+        // Clean up on component unmount or when payment completes
+        return () => {
+          window.removeEventListener('focus', handleWindowFocus)
+          clearTimeout(cleanupTimeout)
+        }
       } catch (popupError: any) {
         console.error('Paystack popup error:', popupError)
         throw new Error(popupError.message || 'Failed to open payment popup. Please try again.')
@@ -474,6 +619,23 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <CheckoutPageContent />
+    </Suspense>
   )
 }
 

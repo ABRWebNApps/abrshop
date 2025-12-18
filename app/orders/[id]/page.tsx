@@ -259,10 +259,10 @@ export default async function OrderPage({
             </Link>
             {order.status === 'pending' && (
               <Link
-                href="/checkout"
+                href={`/checkout?orderId=${order.id}`}
                 className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-center font-medium"
               >
-                Complete Payment
+                Complete Order
               </Link>
             )}
             <PrintButton />

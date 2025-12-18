@@ -31,6 +31,10 @@ export async function POST(request: NextRequest) {
 
     const callbackUrl = `${baseUrl}/api/paystack/callback`;
 
+    // Generate unique payment reference to avoid duplicate transaction errors
+    // Use orderId + timestamp to ensure uniqueness
+    const uniqueReference = `${orderId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
     // Initialize transaction with Paystack
     const response = await fetch(
       "https://api.paystack.co/transaction/initialize",
@@ -43,7 +47,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           email,
           amount: amountInKobo,
-          reference: orderId,
+          reference: uniqueReference, // Use unique reference instead of orderId
           callback_url: callbackUrl,
           metadata: {
             order_id: orderId,
@@ -95,13 +99,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Note: We use orderId as the reference, so we can look up orders by reference
-    // The order is already created with status 'pending', which is correct
+    // Store the payment reference in the order for later lookup
+    const supabase = await createClient();
+    await supabase
+      .from('orders')
+      .update({ payment_reference: uniqueReference })
+      .eq('id', orderId);
 
     return NextResponse.json({
       access_code: data.data.access_code,
       reference: data.data.reference,
       authorization_url: data.data.authorization_url,
+      orderId: orderId, // Include orderId in response for client-side use
     });
   } catch (error: any) {
     console.error("Error initializing Paystack payment:", error);

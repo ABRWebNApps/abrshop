@@ -37,6 +37,7 @@ function CheckoutPageContent() {
   const [existingOrderId, setExistingOrderId] = useState<string | null>(null)
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
+  const [paymentCompleted, setPaymentCompleted] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -166,6 +167,17 @@ function CheckoutPageContent() {
       alert('Failed to cancel order. Please try again.')
       setCancelling(false)
     }
+  }
+
+  const handlePaymentCompleted = async () => {
+    if (!currentOrderId) return
+
+    setPaymentCompleted(true)
+    setLoading(false)
+    
+    // Redirect to payment verification/order page
+    // The verification will check if payment was actually made
+    router.push(`/orders/${currentOrderId}?verify=payment`)
   }
 
   const onSubmit = async (data: CheckoutFormData) => {
@@ -311,34 +323,56 @@ function CheckoutPageContent() {
       // Initialize Paystack payment
       console.log('Initializing Paystack payment for order:', order.id)
       
-      const response = await fetch('/api/paystack/initialize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: data.email,
-          amount: getTotal(),
-          orderId: order.id,
-          metadata: [
-            {
-              display_name: 'Customer Name',
-              variable_name: 'customer_name',
-              value: data.name,
-            },
-          ],
-        }),
-      })
+      let response: Response
+      try {
+        response = await fetch('/api/paystack/initialize', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: data.email,
+            amount: getTotal(),
+            orderId: order.id,
+            metadata: [
+              {
+                display_name: 'Customer Name',
+                variable_name: 'customer_name',
+                value: data.name,
+              },
+            ],
+          }),
+        })
+      } catch (fetchError: any) {
+        console.error('Network error initializing payment:', fetchError)
+        setLoading(false)
+        throw new Error('Network error: Unable to connect to payment service. Please check your internet connection and try again.')
+      }
 
       console.log('Paystack initialize response status:', response.status)
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
+        let errorData: any = {}
+        try {
+          errorData = await response.json()
+        } catch (parseError) {
+          // If response is not JSON, use status text
+          console.error('Failed to parse error response:', parseError)
+          errorData = { error: `Payment initialization failed: ${response.status} ${response.statusText}` }
+        }
         console.error('Paystack initialization error response:', errorData)
-        throw new Error(errorData.error || `Payment initialization failed: ${response.status} ${response.statusText}`)
+        setLoading(false)
+        throw new Error(errorData.error || errorData.message || `Payment initialization failed: ${response.status} ${response.statusText}`)
       }
 
-      const paymentData = await response.json()
+      let paymentData: any
+      try {
+        paymentData = await response.json()
+      } catch (parseError) {
+        console.error('Failed to parse payment response:', parseError)
+        setLoading(false)
+        throw new Error('Invalid response from payment service. Please try again.')
+      }
       console.log('Paystack payment data received:', { 
         hasAccessCode: !!paymentData.access_code,
         hasReference: !!paymentData.reference,
@@ -362,6 +396,7 @@ function CheckoutPageContent() {
         const currentOrderId = order.id
 
         // Set up window focus listener to detect when popup closes
+        let popupClosed = false
         const handleWindowFocus = () => {
           // When window regains focus, check if we're still on checkout
           // If popup was closed without payment, Paystack may not call callback
@@ -369,10 +404,11 @@ function CheckoutPageContent() {
           setTimeout(() => {
             // Check if we're still on checkout page and still loading
             // This means popup was likely closed without completing payment
-            if (window.location.pathname === '/checkout' && loading) {
-              console.log('Popup likely closed without payment, redirecting to order page')
+            if (window.location.pathname === '/checkout' && loading && !paymentCompleted) {
+              console.log('Popup likely closed without payment')
+              popupClosed = true
               setLoading(false)
-              router.push(`/orders/${currentOrderId}?payment=cancelled`)
+              // Don't redirect immediately - show "I've completed payment" button instead
             }
           }, 2000) // Wait 2 seconds to see if callback fires
         }
@@ -387,6 +423,9 @@ function CheckoutPageContent() {
         // Clean up listener after 10 minutes (payment should complete by then)
         const cleanupTimeout = setTimeout(() => {
           window.removeEventListener('focus', handleWindowFocus)
+          if (loading && !paymentCompleted) {
+            setLoading(false)
+          }
         }, 600000) // 10 minutes
 
         // Clean up on component unmount or when payment completes
@@ -598,22 +637,41 @@ function CheckoutPageContent() {
               </div>
 
               <div className="space-y-3">
-                <button
-                  type="submit"
-                  disabled={loading || cancelling}
-                  className="w-full py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Processing...' : 'Place Order'}
-                </button>
-                {loading && currentOrderId && (
-                  <button
-                    type="button"
-                    onClick={handleCancelOrder}
-                    disabled={cancelling}
-                    className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
-                  >
-                    {cancelling ? 'Cancelling...' : 'Cancel Order'}
-                  </button>
+                {!paymentCompleted ? (
+                  <>
+                    <button
+                      type="submit"
+                      disabled={loading || cancelling}
+                      className="w-full py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Processing...' : 'Place Order'}
+                    </button>
+                    {loading && currentOrderId && (
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={handlePaymentCompleted}
+                          disabled={cancelling}
+                          className="w-full py-2 text-sm bg-green-50 text-green-700 hover:bg-green-100 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-green-200"
+                        >
+                          I've Completed Payment
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelOrder}
+                          disabled={cancelling}
+                          className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
+                        >
+                          {cancelling ? 'Cancelling...' : 'Cancel Order'}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-600 mb-3">Verifying your payment...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  </div>
                 )}
               </div>
             </form>

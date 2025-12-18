@@ -4,6 +4,8 @@ import { Package, CheckCircle, Clock, XCircle, Receipt } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/currency";
 import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
+import VerifyPayment from "./verify-payment";
+import PrintStyles from "@/components/PrintStyles";
 
 async function getOrder(id: string) {
   const supabase = await createClient();
@@ -70,12 +72,29 @@ export default async function OrderPage({
   const items = (order.items as any[]) || [];
   const paymentStatus = resolvedSearchParams.payment as string | undefined;
   const statusParam = resolvedSearchParams.status as string | undefined;
+  const verifyParam = resolvedSearchParams.verify as string | undefined;
   const isSuccessfulPayment = paymentStatus === "success";
-  const isCancelledPayment = paymentStatus === "cancelled" || statusParam === "cancelled";
+  const isCancelledPayment =
+    paymentStatus === "cancelled" || statusParam === "cancelled";
+  const needsVerification = verifyParam === "payment" && order.status === "pending";
 
   return (
-    <div className="min-h-screen bg-black py-12">
+    <>
+      <PrintStyles />
+      <div className="min-h-screen bg-black py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Payment Verification Banner */}
+        {needsVerification && (
+          <div className="mb-6">
+            <VerifyPayment 
+              orderId={order.id} 
+              onVerified={(success) => {
+                // Verification handled by VerifyPayment component redirect
+              }}
+            />
+          </div>
+        )}
+
         {/* Success/Cancelled Message Banner */}
         {isSuccessfulPayment && (
           <div className="mb-6 bg-green-900/20 border border-green-500/30 rounded-lg p-4 flex items-center space-x-3">
@@ -299,7 +318,7 @@ export default async function OrderPage({
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row gap-4">
+          <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row gap-4 no-print">
             <Link
               href="/profile"
               className="flex-1 px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors text-center font-medium"
@@ -314,10 +333,19 @@ export default async function OrderPage({
                 Complete Order
               </Link>
             )}
-            <PrintButton />
+            {(order.status === "processing" || order.status === "delivered" || isSuccessfulPayment) && (
+              <PrintButton />
+            )}
+          </div>
+          
+          {/* Print Header - Only visible when printing */}
+          <div className="print-only mb-8 text-center border-b pb-4">
+            <h1 className="text-2xl font-bold text-black">Order Receipt</h1>
+            <p className="text-gray-600">Thank you for your purchase!</p>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

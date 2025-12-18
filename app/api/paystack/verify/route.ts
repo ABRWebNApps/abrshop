@@ -53,11 +53,27 @@ export async function GET(request: NextRequest) {
 
     // Get order from database
     const supabase = await createClient()
-    const { data: order, error: orderError } = await supabase
+    
+    // Try to find order by ID first
+    let { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
       .eq('id', orderId)
       .single()
+
+    // If not found by ID, try to find by payment_reference (fallback)
+    if (orderError || !order) {
+      const { data: orderByRef, error: refError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('payment_reference', reference)
+        .single()
+      
+      if (orderByRef) {
+        order = orderByRef
+        orderError = null
+      }
+    }
 
     if (orderError || !order) {
       return NextResponse.json(
@@ -76,11 +92,13 @@ export async function GET(request: NextRequest) {
 
       // Update order status based on payment status
       if (transaction.status === 'success') {
-        // Update order status
+        // Update order status to processing and store payment info
         await supabase
           .from('orders')
           .update({
             status: 'processing',
+            payment_reference: transaction.reference,
+            paid_at: transaction.paid_at ? new Date(transaction.paid_at).toISOString() : null,
           })
           .eq('id', order.id)
 
@@ -110,14 +128,14 @@ export async function GET(request: NextRequest) {
             }
           }
         }
-
-        // Clear cart (we'll handle this via a client-side redirect)
-        // The order page will handle clearing the cart
       } else {
+        // For cancelled/failed payments, keep order as pending so user can see it
+        // This allows them to retry payment later
         await supabase
           .from('orders')
           .update({
-            status: 'cancelled',
+            status: 'pending',
+            payment_reference: transaction.reference,
           })
           .eq('id', order.id)
       }

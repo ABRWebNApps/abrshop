@@ -27,19 +27,26 @@ function PaymentVerifyContent() {
         const data = await response.json()
 
         if (data.success && data.transaction.status === 'success') {
+          // Payment successful
           setStatus('success')
           setOrderId(data.order.id)
           
           // Clear cart after successful payment
           clearCart()
           
-          // Redirect to order page after 2 seconds
-          setTimeout(() => {
-            router.push(`/orders/${data.order.id}`)
-          }, 2000)
+          // Redirect immediately to order page with receipt
+          router.push(`/orders/${data.order.id}?payment=success`)
         } else {
-          setStatus('failed')
-          setError(data.error || 'Payment verification failed')
+          // Payment cancelled or failed - still redirect to order page showing pending status
+          // The order will remain as "pending" so user can see it and retry
+          if (data.order && data.order.id) {
+            setOrderId(data.order.id)
+            // Redirect to order page showing pending status
+            router.push(`/orders/${data.order.id}?payment=cancelled`)
+          } else {
+            setStatus('failed')
+            setError(data.error || 'Payment was cancelled. Your order is still pending.')
+          }
         }
       } catch (err: any) {
         setStatus('failed')
@@ -63,25 +70,24 @@ function PaymentVerifyContent() {
 
         {status === 'success' && (
           <>
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <Loader2 className="w-16 h-16 text-green-500 animate-spin mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h2>
             <p className="text-gray-600 mb-4">Your payment has been verified successfully.</p>
-            <p className="text-sm text-gray-500">Redirecting to your order...</p>
-            {orderId && (
-              <button
-                onClick={() => router.push(`/orders/${orderId}`)}
-                className="mt-4 w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                View Order
-              </button>
-            )}
+            <p className="text-sm text-gray-500">Redirecting to your order receipt...</p>
           </>
         )}
 
-        {status === 'failed' && (
+        {status === 'failed' && orderId ? (
+          <>
+            <Loader2 className="w-16 h-16 text-yellow-500 animate-spin mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Cancelled</h2>
+            <p className="text-gray-600 mb-4">Your order is still pending. You can retry payment later.</p>
+            <p className="text-sm text-gray-500">Redirecting to your order...</p>
+          </>
+        ) : status === 'failed' ? (
           <>
             <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Failed</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Verification Failed</h2>
             <p className="text-gray-600 mb-4">{error || 'Your payment could not be verified.'}</p>
             <button
               onClick={() => router.push('/checkout')}
@@ -90,7 +96,7 @@ function PaymentVerifyContent() {
               Return to Checkout
             </button>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   )

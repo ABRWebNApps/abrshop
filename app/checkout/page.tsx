@@ -392,37 +392,123 @@ function CheckoutPageContent() {
         const PaystackPop = (await import('@paystack/inline-js')).default
         const paystack = new PaystackPop()
         
-        // Store order ID for potential redirect
+        // Store order ID and payment reference for tracking
         const currentOrderId = order.id
+        // Get payment reference from response or use order ID as fallback
+        const paymentReference = paymentData.reference || paymentData.orderId || currentOrderId
+        
+        // Update order with payment reference if we have it
+        if (paymentData.reference && paymentData.reference !== currentOrderId) {
+          const supabase = createClient()
+          supabase
+            .from('orders')
+            .update({ payment_reference: paymentData.reference })
+            .eq('id', currentOrderId)
+            .then(({ error }) => {
+              if (error) {
+                console.error('Error updating payment reference:', error)
+              }
+            })
+        }
+
+        // Function to verify payment status
+        const verifyPaymentStatus = async (reference: string): Promise<boolean> => {
+          try {
+            const verifyResponse = await fetch(`/api/paystack/verify?reference=${reference}`)
+            if (!verifyResponse.ok) {
+              return false
+            }
+            
+            const verifyData = await verifyResponse.json()
+            return verifyData.success && verifyData.transaction?.status === 'success'
+          } catch (error) {
+            console.error('Error verifying payment:', error)
+            return false
+          }
+        }
+
+        // Function to handle successful payment
+        const handleSuccessfulPayment = () => {
+          setPaymentCompleted(true)
+          setLoading(false)
+          // Clear cart after successful payment
+          clearCart()
+          // Redirect to order page with success status
+          router.push(`/orders/${currentOrderId}?payment=success`)
+        }
 
         // Set up window focus listener to detect when popup closes
-        let popupClosed = false
-        const handleWindowFocus = () => {
-          // When window regains focus, check if we're still on checkout
-          // If popup was closed without payment, Paystack may not call callback
-          // So we check after a short delay
-          setTimeout(() => {
-            // Check if we're still on checkout page and still loading
-            // This means popup was likely closed without completing payment
-            if (window.location.pathname === '/checkout' && loading && !paymentCompleted) {
-              console.log('Popup likely closed without payment')
-              popupClosed = true
-              setLoading(false)
-              // Don't redirect immediately - show "I've completed payment" button instead
+        let isChecking = false
+        const handleWindowFocus = async () => {
+          // When window regains focus, check if payment was completed
+          if (isChecking || paymentCompleted) return
+          
+          isChecking = true
+          console.log('Window regained focus, checking payment status...')
+          
+          // Wait a moment for Paystack to process the payment
+          setTimeout(async () => {
+            try {
+              // Check if payment was successful
+              const isSuccessful = await verifyPaymentStatus(paymentReference)
+              
+              if (isSuccessful) {
+                console.log('Payment successful! Redirecting to order page...')
+                handleSuccessfulPayment()
+              } else {
+                // Payment not successful yet or was cancelled
+                console.log('Payment not completed or cancelled')
+                if (window.location.pathname === '/checkout' && loading) {
+                  setLoading(false)
+                  // Show buttons for user to verify or cancel
+                }
+              }
+            } catch (error) {
+              console.error('Error checking payment status:', error)
+              if (window.location.pathname === '/checkout' && loading) {
+                setLoading(false)
+              }
+            } finally {
+              isChecking = false
             }
-          }, 2000) // Wait 2 seconds to see if callback fires
+          }, 3000) // Wait 3 seconds for Paystack to process
         }
+
+        // Set up polling to check payment status periodically
+        let pollCount = 0
+        const maxPolls = 20 // Poll for up to 2 minutes (20 * 6 seconds)
+        const pollInterval = setInterval(async () => {
+          if (paymentCompleted || pollCount >= maxPolls) {
+            clearInterval(pollInterval)
+            return
+          }
+
+          pollCount++
+          console.log(`Polling payment status (${pollCount}/${maxPolls})...`)
+          
+          try {
+            const isSuccessful = await verifyPaymentStatus(paymentReference)
+            if (isSuccessful) {
+              console.log('Payment successful via polling! Redirecting...')
+              clearInterval(pollInterval)
+              handleSuccessfulPayment()
+            }
+          } catch (error) {
+            console.error('Error polling payment status:', error)
+          }
+        }, 6000) // Poll every 6 seconds
 
         window.addEventListener('focus', handleWindowFocus)
 
         // Open payment popup
         paystack.resumeTransaction(paymentData.access_code)
         
-        console.log('Paystack popup opened successfully')
+        console.log('Paystack popup opened successfully, tracking payment...')
         
-        // Clean up listener after 10 minutes (payment should complete by then)
+        // Clean up listeners after 10 minutes
         const cleanupTimeout = setTimeout(() => {
           window.removeEventListener('focus', handleWindowFocus)
+          clearInterval(pollInterval)
           if (loading && !paymentCompleted) {
             setLoading(false)
           }
@@ -431,6 +517,7 @@ function CheckoutPageContent() {
         // Clean up on component unmount or when payment completes
         return () => {
           window.removeEventListener('focus', handleWindowFocus)
+          clearInterval(pollInterval)
           clearTimeout(cleanupTimeout)
         }
       } catch (popupError: any) {

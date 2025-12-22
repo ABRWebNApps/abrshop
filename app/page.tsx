@@ -187,7 +187,7 @@ export default async function Home() {
               No products available yet.
             </p>
             <Link
-              href="/admin"
+              href="/superb/admin/access/account"
               className="text-blue-500 hover:text-blue-400 font-medium"
             >
               Add products in admin panel

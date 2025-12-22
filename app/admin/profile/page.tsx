@@ -93,7 +93,7 @@ export default function AdminProfilePage() {
 
               <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/10">
                 <Link
-                  href="/admin"
+                  href="/superb/admin/access/account"
                   className="w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors text-xs sm:text-sm"
                 >
                   <Package className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />

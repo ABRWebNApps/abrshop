@@ -117,7 +117,7 @@ export default function Header() {
                 </Link>
                 {user.user_metadata?.role === "admin" && (
                   <Link
-                    href="/admin"
+                    href="/superb/admin/access/account"
                     className="text-white hover:text-blue-500 transition-colors font-medium"
                   >
                     Admin
@@ -186,7 +186,7 @@ export default function Header() {
                 </Link>
                 {user.user_metadata?.role === "admin" && (
                   <Link
-                    href="/admin"
+                    href="/superb/admin/access/account"
                     className="block py-2 px-4 text-white hover:text-blue-500 hover:bg-gray-900 rounded-lg transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >

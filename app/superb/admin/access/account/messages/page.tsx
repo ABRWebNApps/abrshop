@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Mail, MessageSquare, User, Calendar, CheckCircle, XCircle, Reply } from "lucide-react";
 // Simple date formatting function
 const formatDate = (dateString: string) => {
@@ -53,13 +52,11 @@ export default function ContactMessagesPage() {
 
   const loadMessages = async () => {
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("contact_messages")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const response = await fetch("/api/admin/contact-messages");
+      if (!response.ok) {
+        throw new Error("Failed to load messages");
+      }
+      const { messages: data } = await response.json();
       setMessages(data || []);
     } catch (error: any) {
       console.error("Error loading messages:", error);
@@ -71,13 +68,12 @@ export default function ContactMessagesPage() {
 
   const markAsRead = async (messageId: string) => {
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("contact_messages")
-        .update({ status: "read" })
-        .eq("id", messageId);
-
-      if (error) throw error;
+      const response = await fetch("/api/admin/contact-messages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId, status: "read" }),
+      });
+      if (!response.ok) throw new Error("Failed to update");
       loadMessages();
     } catch (error: any) {
       console.error("Error marking as read:", error);
@@ -89,16 +85,17 @@ export default function ContactMessagesPage() {
 
     setReplying(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("contact_messages")
-        .update({
+      const response = await fetch("/api/admin/contact-messages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageId: selectedMessage.id,
           status: "replied",
-          admin_response: replyText,
-        })
-        .eq("id", selectedMessage.id);
+          adminResponse: replyText,
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error("Failed to send reply");
 
       // Send reply email (you can enhance this with actual email service)
       await fetch("/api/contact/reply", {

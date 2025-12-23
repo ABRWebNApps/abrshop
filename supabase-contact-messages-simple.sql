@@ -1,5 +1,8 @@
+-- Drop table if exists (for clean setup)
+DROP TABLE IF EXISTS contact_messages CASCADE;
+
 -- Create contact_messages table
-CREATE TABLE IF NOT EXISTS contact_messages (
+CREATE TABLE contact_messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -12,28 +15,25 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create index for faster queries
-CREATE INDEX IF NOT EXISTS idx_contact_messages_user_id ON contact_messages(user_id);
-CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages(status);
-CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at ON contact_messages(created_at DESC);
+-- Create indexes
+CREATE INDEX idx_contact_messages_user_id ON contact_messages(user_id);
+CREATE INDEX idx_contact_messages_status ON contact_messages(status);
+CREATE INDEX idx_contact_messages_created_at ON contact_messages(created_at DESC);
 
 -- Enable RLS
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can view their own messages
-CREATE POLICY "Users can view their own messages"
-  ON contact_messages
-  FOR SELECT
-  USING (auth.uid() = user_id);
-
--- Policy: Users can insert their own messages
+-- Policy: Users can insert their own messages (SIMPLE - no admin checks)
 CREATE POLICY "Users can insert their own messages"
   ON contact_messages
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- Note: Admin access is handled in application code using service role client
--- No RLS policies needed for admin operations
+-- Policy: Users can view their own messages (SIMPLE - no admin checks)
+CREATE POLICY "Users can view their own messages"
+  ON contact_messages
+  FOR SELECT
+  USING (auth.uid() = user_id);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_contact_messages_updated_at()

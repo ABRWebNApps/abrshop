@@ -14,42 +14,54 @@ export default function AISearch() {
     e.preventDefault();
     if (!query.trim() || loading) return;
 
-    setLoading(true);
-    try {
-      const response = await fetch("/api/gemini", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: query.trim() }),
-      });
+    // Trigger chatbot to open and search instead of redirecting
+    const chatButton = document.querySelector('[aria-label="Open Athena AI Assistant"]') as HTMLButtonElement;
+    if (chatButton) {
+      chatButton.click();
+      // Wait a bit for chat to open, then trigger search
+      setTimeout(() => {
+        // Dispatch custom event to trigger search in chatbot
+        window.dispatchEvent(new CustomEvent('chatbot-search', { detail: { query: query.trim() } }));
+      }, 500);
+    } else {
+      // Fallback: if chatbot button not found, use old behavior
+      setLoading(true);
+      try {
+        const response = await fetch("/api/gemini", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: query.trim() }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || `Search failed with status ${response.status}`;
-        console.error("API Error:", errorMessage);
-        throw new Error(errorMessage);
-      }
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `Search failed with status ${response.status}`;
+          console.error("API Error:", errorMessage);
+          throw new Error(errorMessage);
+        }
 
-      const { productIds } = await response.json();
+        const { productIds } = await response.json();
 
-      // Navigate to products page with AI search results
-      if (productIds && productIds.length > 0) {
-        // Store product IDs in sessionStorage for the products page to use
-        sessionStorage.setItem("aiSearchResults", JSON.stringify(productIds));
-        router.push(`/products?ai_search=true`);
-      } else {
-        // No results found, still navigate but show a message
+        // Navigate to products page with AI search results
+        if (productIds && productIds.length > 0) {
+          // Store product IDs in sessionStorage for the products page to use
+          sessionStorage.setItem("aiSearchResults", JSON.stringify(productIds));
+          router.push(`/products?ai_search=true`);
+        } else {
+          // No results found, still navigate but show a message
+          router.push(`/products?search=${encodeURIComponent(query)}`);
+        }
+      } catch (error: any) {
+        console.error("Error searching:", error);
+        // Show user-friendly error message
+        alert(`Search error: ${error.message || "Please try again or use regular search"}`);
+        // Fallback to regular search
         router.push(`/products?search=${encodeURIComponent(query)}`);
+      } finally {
+        setLoading(false);
       }
-    } catch (error: any) {
-      console.error("Error searching:", error);
-      // Show user-friendly error message
-      alert(`Search error: ${error.message || "Please try again or use regular search"}`);
-      // Fallback to regular search
-      router.push(`/products?search=${encodeURIComponent(query)}`);
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils/currency";
 
 interface ChatProductCardProps {
@@ -23,6 +24,7 @@ export default function ChatProductCard({
   product,
   isRecommendation = false,
 }: ChatProductCardProps) {
+  const router = useRouter();
   const mainImage =
     product.images && product.images.length > 0
       ? product.images[0]
@@ -31,9 +33,18 @@ export default function ChatProductCard({
   const categoryName = product.category?.name || "Product";
   const brandName = product.brand?.name;
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Minimize chat by dispatching event
+    window.dispatchEvent(new CustomEvent('minimize-chat'));
+    // Navigate to product
+    router.push(`/products/${product.id}`);
+  };
+
   return (
     <Link
       href={`/products/${product.id}`}
+      onClick={handleClick}
       className={`block group ${
         isRecommendation ? "opacity-90 hover:opacity-100" : ""
       }`}

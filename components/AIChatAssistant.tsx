@@ -42,6 +42,94 @@ export default function AIChatAssistant() {
     }
   }, [isOpen]);
 
+  // Listen for chatbot-search event from search box
+  useEffect(() => {
+    const handleChatbotSearch = (event: CustomEvent) => {
+      const query = event.detail?.query;
+      if (query) {
+        setInput(query);
+        // Open chat if closed
+        if (!isOpen) {
+          setIsOpen(true);
+        }
+        // Wait for chat to be open, then send
+        setTimeout(() => {
+          const userMessage = query;
+          setInput("");
+          
+          const newUserMessage: Message = {
+            role: "user",
+            content: userMessage,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, newUserMessage]);
+          setLoading(true);
+
+          // Build conversation history
+          const conversationHistory = messages
+            .slice(-10)
+            .map((msg) => ({
+              role: msg.role,
+              content: msg.content,
+            }));
+
+          fetch("/api/gemini/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              query: userMessage,
+              conversationHistory,
+            }),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                return response.json().then((errorData) => {
+                  throw new Error(errorData.error || "Failed to get response");
+                });
+              }
+              return response.json();
+            })
+            .then((data) => {
+              const assistantMessage: Message = {
+                role: "assistant",
+                content: data.message || "I found some options for you!",
+                products: data.products || [],
+                recommendations: data.recommendations || [],
+                clarifyingQuestion: data.clarifyingQuestion || null,
+                timestamp: new Date(),
+              };
+              setMessages((prev) => [...prev, assistantMessage]);
+            })
+            .catch((error: any) => {
+              console.error("Error:", error);
+              const errorMessage: Message = {
+                role: "assistant",
+                content: `Sorry, I encountered an error: ${error.message}. Please try again or use the regular search.`,
+                timestamp: new Date(),
+              };
+              setMessages((prev) => [...prev, errorMessage]);
+            })
+            .finally(() => {
+              setLoading(false);
+            });
+        }, 300);
+      }
+    };
+
+    const handleMinimizeChat = () => {
+      setIsOpen(false);
+    };
+
+    window.addEventListener('chatbot-search' as any, handleChatbotSearch as EventListener);
+    window.addEventListener('minimize-chat' as any, handleMinimizeChat as EventListener);
+    return () => {
+      window.removeEventListener('chatbot-search' as any, handleChatbotSearch as EventListener);
+      window.removeEventListener('minimize-chat' as any, handleMinimizeChat as EventListener);
+    };
+  }, [isOpen, messages]);
+
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || loading) return;

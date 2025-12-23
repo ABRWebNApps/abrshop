@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   ShoppingCart,
   Tag,
+  MessageSquare,
 } from "lucide-react";
 
 export default async function AdminLayout({
@@ -78,6 +79,13 @@ export default async function AdminLayout({
               >
                 <ShoppingCart className="w-5 h-5" />
                 <span>Orders</span>
+              </Link>
+              <Link
+                href="/superb/admin/access/account/messages"
+                className="flex items-center space-x-3 px-4 py-3 text-blue-100 hover:bg-blue-700/50 hover:text-white rounded-lg transition-colors border border-transparent hover:border-blue-400/30"
+              >
+                <MessageSquare className="w-5 h-5" />
+                <span>Messages</span>
               </Link>
             </nav>
           </div>

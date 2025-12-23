@@ -32,29 +32,30 @@ CREATE POLICY "Users can insert their own messages"
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+-- Function to check if user is admin (using JWT claims)
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Check role from JWT claims
+  RETURN (auth.jwt() ->> 'user_metadata')::jsonb ->> 'role' = 'admin';
+END;
+$$;
+
 -- Policy: Admins can view all messages
 CREATE POLICY "Admins can view all messages"
   ON contact_messages
   FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND (auth.users.raw_user_meta_data->>'role')::text = 'admin'
-    )
-  );
+  USING (is_admin());
 
 -- Policy: Admins can update all messages
 CREATE POLICY "Admins can update all messages"
   ON contact_messages
   FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND (auth.users.raw_user_meta_data->>'role')::text = 'admin'
-    )
-  );
+  USING (is_admin());
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_contact_messages_updated_at()

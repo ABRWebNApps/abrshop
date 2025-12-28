@@ -1,42 +1,79 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { to, subject, message, originalMessage } = await request.json();
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    // Email body for reply
-    const emailBody = `
-Hello,
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-Thank you for contacting ABR Technologies. Here is our response:
+    const { messageId, message } = await request.json();
 
-${message}
+    if (!messageId || !message) {
+      return NextResponse.json(
+        { error: "Message ID and content are required" },
+        { status: 400 }
+      );
+    }
 
----
-Original Message:
-${originalMessage}
+    // Fetch original message to verify access
+    const { data: originalMessage, error: fetchError } = await supabase
+      .from("contact_messages")
+      .select("*")
+      .eq("id", messageId)
+      .single();
 
-Best regards,
-ABR Technologies Team
-    `.trim();
+    if (fetchError || !originalMessage) {
+      return NextResponse.json({ error: "Message not found" }, { status: 404 });
+    }
 
-    // For now, just log the email (you can configure actual email service)
-    console.log("=== CONTACT FORM REPLY EMAIL ===");
-    console.log(`To: ${to}`);
-    console.log(`Subject: ${subject}`);
-    console.log(`Body:\n${emailBody}`);
-    console.log("================================");
+    const isAdmin = user.user_metadata?.role === "admin";
 
-    // TODO: Replace with actual email service integration
-    // Recommended services: Resend, SendGrid, AWS SES, or Nodemailer
+    // Verify access
+    if (!isAdmin && originalMessage.user_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    return NextResponse.json({ success: true });
+    const senderRole = isAdmin ? "admin" : "user";
+    const newStatus = isAdmin ? "replied" : "new"; // If admin replies, status is replied. If user replies, status is new (unread for admin).
+
+    // Insert reply
+    const { data: reply, error: insertError } = await supabase
+      .from("contact_replies")
+      .insert({
+        message_id: messageId,
+        sender_role: senderRole,
+        message: message,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    // Update parent message status (and potentially update 'updated_at' to bump it to top)
+    await supabase
+      .from("contact_messages")
+      .update({
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", messageId);
+
+    // TODO: Send email notification to the other party (Admin -> User or User -> Admin)
+
+    return NextResponse.json({ reply });
   } catch (error: any) {
-    console.error("Email sending error:", error);
+    console.error("Error sending reply:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to send email" },
+      { error: error.message || "Internal server error" },
       { status: 500 }
     );
   }
 }
-

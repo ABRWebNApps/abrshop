@@ -4,16 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    // Authenticate user if possible, but don't require it
     const {
       data: { user },
     } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
 
     const { name, email, subject, message } = await request.json();
 
@@ -28,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { data: contactMessage, error: dbError } = await supabase
       .from("contact_messages")
       .insert({
-        user_id: user.id,
+        user_id: user?.id || null, // Allow null for anonymous users
         name,
         email,
         subject,
@@ -56,7 +50,7 @@ export async function POST(request: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            to: "info@abrtechltd.com",
+            to: "info@abrtechltd.com, sales@abrtechltd.com",
             subject: `New Contact Form Submission: ${subject}`,
             name,
             email,
@@ -86,4 +80,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

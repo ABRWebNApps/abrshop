@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
+import MessagePopover from "./MessagePopover";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -86,9 +87,20 @@ export default function Header() {
             >
               New Arrivals
             </Link>
+            <Link
+              href="/contact"
+              className={`transition-colors font-medium text-sm lg:text-base ${
+                pathname === "/contact"
+                  ? "text-blue-500"
+                  : "text-white hover:text-blue-500"
+              }`}
+            >
+              Contact
+            </Link>
           </div>
 
           <div className="flex items-center space-x-2 md:space-x-4">
+            {user && <MessagePopover />}
             <Link
               href="/cart"
               className="relative p-1.5 md:p-2 text-white hover:text-blue-500 transition-colors"
@@ -174,6 +186,13 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               New Arrivals
+            </Link>
+            <Link
+              href="/contact"
+              className="block py-2 px-4 text-white hover:text-blue-500 hover:bg-gray-900 rounded-lg transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Contact
             </Link>
             {user ? (
               <>

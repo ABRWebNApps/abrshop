@@ -317,12 +317,12 @@ export default function MessagePopover() {
               </form>
             ) : (
               <Link
-                href="/contact"
+                href="/profile?tab=support"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center justify-center w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
-                Open New Ticket
+                Open Support Ticket
               </Link>
             )}
           </div>
